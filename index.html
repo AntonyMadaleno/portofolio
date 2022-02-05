@@ -1,0 +1,4613 @@
+<html>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<head>
+
+	<link href="https://fonts.googleapis.com/css?family=Poppins&display=swap" rel="stylesheet">
+	<link href="cv/CSS/main.css" rel="stylesheet" type="text/css" /> 
+	<link href="css/main.css" rel="stylesheet" type="text/css" />
+	<link href="css/component.css" rel="stylesheet" type="text/css" />
+	<link href="css/Index.css" rel="stylesheet" type="text/css" />
+	<link href="prism/prism.css" rel="stylesheet" />
+
+	<script type="text/javascript" src="js/OrbitControls.js"> </script>
+	<script type="text/javascript" src="js/three.js"> </script>
+	<script type="text/javascript" src="js/Geo3D.js"> </script>
+
+</head>
+
+<body onload="load()">
+
+	<div id="mainContainer">
+
+		<div id="render" class="webgl" width="500px" height="500px">
+
+		</div>
+
+		<div class="project_card_container">
+
+			<ul class="marker"></ul>
+
+			<div class="card">
+
+				<div class="cardTitle"> Pathfinding </div>
+
+				<div class="cardTech">
+					<span class="logo_big" id="js"></span>
+				</div>
+
+				<div class="cardLinks">
+					<div class="git" onclick="window.location.href='https://github.com/AntonyMadaleno/dijkastra-visualisation'">
+						<span class="logo_big" id="github"></span>
+					</div>
+					<button onclick="window.location.href='projets/Pathfinding/main.html'"> Démo </button>
+				</div>
+
+				<div class="cardDescription">
+					Visualisation d'algorithme de parcours de graphes permettant lorsqu'il existe au moin un chemin entre 2 points de trouver parmi ses chemin le plus court d'entre eux. 
+					</br></br>
+					Afin de faire cette visualition on se base les technologie JS et la manipulation des DOM.
+					</br></br>
+					CODE &lt<span class="logo" id="js" style="padding: 0"></span>&gt
+					<pre><code class="language-javascript">						
+var builder = "void";
+var nodes;
+var grid;
+var checkpoints = [];
+var mousedown;
+var cols;
+var rows;
+let scale;
+let startTime;
+let endTime;
+
+function loadGrid(ro, co) {
+
+	nodes = new Array(ro); //node table
+	grid = new Array(ro); //cell table
+	rows = ro;
+	cols = co;
+	
+	for (let i = 0; i < ro; i++) {
+
+		var row = document.createElement("tr");
+		grid[i] = new Array(co);
+		nodes[i] = new Array(co);
+
+		for (let j = 0; j < co; j++) {
+			var cell = document.createElement("td");
+			grid[i][j] = cell;
+			let cmod;
+			let w;
+			if (Math.round(Math.random()*100) > 25) {
+				cmod = "void";
+				cell.style = "background-color: #ffffff;";
+			}
+			else {
+				cmod = "wall";
+				cell.style = "background-color: #000000;";
+			}
+			nodes[i][j] = new Node(cmod, i, j, true);
+			modifyCell(cmod, i, j);
+			cell.innerHTML = "";
+			cell.addEventListener("click", function() {modifyCell(builder, i, j);});
+			row.appendChild(cell);
+		}//2
+
+		document.getElementById("grid").appendChild(row);
+
+	}//1
+	document.getElementById("mode_label").innerHTML = builder;
+
+}
+
+//function detectMouseDown(mod) {
+	//mousedown = mod;
+//}
+
+function switchMode(mode) {
+	if (mode == "wall") {builder = "wall";} // les if sont inutile en soi
+	if (mode == "checkpoint") {builder = "checkpoint";}
+	if (mode == "void") {builder = "void";}
+
+	document.getElementById("mode_label").innerHTML = builder;
+}
+
+function modifyCell(mode, i, j, override) {
+
+		let temp = nodes[i][j].getType();
+		nodes[i][j].setType(mode);
+
+		if (mode == "void") {
+			grid[i][j].style = "background-color: #ffffff;";
+			nodes[i][j].weight = 0;
+		}
+
+		if (mode == "wall") {
+			grid[i][j].style = "background-color: #000000;";
+			nodes[i][j].weight = 1000000;
+		}
+
+		if (mode == "checkpoint") {
+			checkpoints.push(nodes[i][j]);
+			if (checkpoints.length > 1) {
+				grid[i][j].style = "background-color: #aa00ee;";
+			} else {grid[i][j].style = "background-color: #00ff00;";}
+			nodes[i][j].weight = 0;
+			
+		}
+
+		console.log(nodes[i][j]);
+
+}
+
+function removeFromArray (arr, elt) {for (i=arr.length; i>=0; i--) {if (arr[i] == elt) {arr.splice(i,1);} }}
+
+class Node {
+
+	constructor(type, i, j) {
+		this.type = type;
+		this.setLock();
+		this.i = i;
+		this.j = j;
+		this.weight = 0;
+		this.estimate = 0;
+	}
+
+	setType(type) {this.type = type;}
+	getType() {return this.type;}
+	setEstimate(goal) {this.estimate = this.getDistance(goal)*scale + this.weight;}
+	setLock() {if (this.type != "wall") {this.lock = true;} else{this.lock = false;}}
+
+	getDistance(node) {
+		let d = Math.sqrt((this.i - node.i)**2) + Math.sqrt((this.j - node.j)**2) ;
+		return d;
+	}
+
+
+}
+
+function showStartPannel() {document.getElementById("start_pannel").style = "visibility: visible;";}
+
+function pathfind() {
+
+	startTime = new Date().getTime();
+	scale = document.getElementById('resolution').value;
+	document.getElementById("start_pannel").style = "visibility: hidden;";
+	var openset = [checkpoints[0]];
+	var closeset = [];
+
+	if (openset.length > 0) {
+		setTimeout(findPath, 16.66, openset, closeset);
+	}
+
+}
+
+function findPath(openset, closeset) {
+
+	let current = openset[0];
+	let goal = checkpoints[1];
+
+	for(i = 0; i < openset.length; i++) {
+		openset[i].setEstimate(goal);
+		if (openset[i].estimate < current.estimate || checkpoints.includes(openset[i])) {current = openset[i];}
+	}
+
+	for(i = 0; i < openset.length; i++) {
+		grid[openset[i].i][openset[i].j].style = "background-color: #ffff00;";
+	}
+	for(i = 0; i < closeset.length; i++) {
+		grid[closeset[i].i][closeset[i].j].style = "background-color: #aaaaaa;";
+	}
+
+	if (current.i < rows-1) {//1
+
+		if (!closeset.includes(nodes[current.i+1][current.j]) && nodes[current.i+1][current.j].type != "wall") {//2
+
+			if (!openset.includes(nodes[current.i+1][current.j])) {//3
+				let nod = nodes[current.i+1][current.j];
+				nod.weight = current.weight + 1;
+				openset.push(nod);
+			}
+			else {
+				if(current.weight + 1 < nodes[current.i+1][current.j].weight) {
+					let nod = nodes[current.i+1][current.j];
+					nod.weight = current.weight + 1;
+				}
+			}//3
+
+		}//2
+
+	}//1
+
+	if (current.i > 0) {
+
+		if (!closeset.includes(nodes[current.i-1][current.j]) && nodes[current.i-1][current.j].type != "wall") {
+
+			if (!openset.includes(nodes[current.i-1][current.j])) {
+				let nod = nodes[current.i-1][current.j];
+				nod.weight = current.weight + 1;
+				openset.push(nod);
+			}
+			else {
+				if(current.weight + 1 < nodes[current.i-1][current.j].weight) {
+					let nod = nodes[current.i-1][current.j];
+					nod.weight = current.weight + 1;
+				}
+			}
+
+		}
+
+	}
+
+	if (current.j < cols-1) {
+
+		if (!closeset.includes(nodes[current.i][current.j+1]) && nodes[current.i][current.j+1].type != "wall") {
+
+			if (!openset.includes(nodes[current.i][current.j+1])) {
+				let nod = nodes[current.i][current.j+1];
+				nod.weight = current.weight + 1;
+				openset.push(nod);
+			}
+			else {
+				if(current.weight + 1 < nodes[current.i][current.j+1].weight) {
+					let nod = nodes[current.i][current.j+1];
+					nod.weight = current.weight + 1;
+				}
+			}
+
+		}
+
+	}
+
+	if (current.j > 0) {
+
+		if (!closeset.includes(nodes[current.i][current.j-1]) && nodes[current.i][current.j-1].type != "wall") {
+
+			if (!openset.includes(nodes[current.i][current.j-1])) {
+				let nod = nodes[current.i][current.j-1];
+				nod.weight = current.weight + 1;
+				openset.push(nod);
+			}
+			else {
+				if(current.weight + 1 < nodes[current.i][current.j-1].weight) {
+					let nod = nodes[current.i][current.j-1];
+					nod.weight = current.weight + 1;
+				}
+			}
+
+		}
+
+	}
+
+	let lock = false;
+
+	if (current == checkpoints[1]) {
+		lock = true;
+		endTime = new Date().getTime() - startTime;
+		setTimeout(drawPath, 100, current);
+	}
+
+	closeset.push(current);
+	removeFromArray(openset, current);
+
+	grid[closeset[0].i][closeset[0].j].style = "background-color: #aa00ee;";
+	if (current === checkpoints[1] && current != checkpoints[0]) {
+		grid[current.i][current.j].style = "background-color: #aa00ee;";
+		openset = [current];
+	}
+
+	if (openset.length > 0 && current.type != checkpoints[1] && lock == false) {
+		setTimeout(findPath, 5, openset, closeset);
+	}
+
+
+}
+
+
+function drawPath(end) {
+
+		let imax = end.i >= rows-1;
+		let imin = end.i == 0;
+		let jmax = end.j >= cols-1;
+		let jmin = end.j == 0;
+
+		if (!imax && nodes[end.i+1][end.j].weight < end.weight && nodes[end.i+1][end.j].weight > 0) { //1
+			grid[end.i+1][end.j].style = "background-color: #ff0000;";
+			end = nodes[end.i+1][end.j];
+		}
+		else {
+			
+			if (!imin && nodes[end.i-1][end.j].weight < end.weight && nodes[end.i-1][end.j].weight > 0) { //2
+				grid[end.i-1][end.j].style = "background-color: #ff0000;";
+				end = nodes[end.i-1][end.j];
+			}
+
+			else {
+				if (!jmax && nodes[end.i][end.j+1].weight < end.weight && nodes[end.i][end.j+1].weight > 0) { //3
+					grid[end.i][end.j+1].style = "background-color: #ff0000;";
+					end = nodes[end.i][end.j+1];
+				}
+				else {
+					
+					if (!jmin && nodes[end.i][end.j-1].weight < end.weight && nodes[end.i][end.j-1].weight > 0) { //4
+						grid[end.i][end.j-1].style = "background-color: #ff0000;";
+						end = nodes[end.i][end.j-1];
+					} //4
+
+				} //3
+
+			} //2
+
+		} //1
+
+
+		if (end.weight > 1) {setTimeout(drawPath, 100, end);}
+		else {alert("longueur du chemin : " + checkpoints[1].weight + "\ntemps d'execution : " + endTime/1000 + " (s)");}
+}
+					</code></pre>
+
+				</div>
+
+			</div>
+
+			<div class="card">
+
+				<div class="cardTitle"> RayCasting 2D </div>
+
+				<div class="cardTech">
+					<span class="logo_big" id="js"></span>
+				</div>
+
+				<div class="cardLinks">
+					<div class="git" onclick="window.location.href='https://github.com/AntonyMadaleno/2D_RealTime_RayCaster'">
+						<span class="logo_big" id="github"></span>
+					</div>
+					<button onclick="window.location.href='projets/2D-ray/index.html'"> Démo </button>
+				</div>
+
+				<div class="cardDescription">
+					Visualisation d'un algorithme de raycasting inspiré du jeu DOOM de 1993 et du tutoriel vidéo de la chaine "The Coding Train". 
+					</br></br>
+					ce projet permet de mieux comprendre le fonctionnement du raycasting et ainsi de pouvoir mieux l'appréhender pour son adapation à la 3D.
+
+					</br></br>
+					Afin de faire cette visualition on se base les technologie JS et la manipulation des DOM ainsi que du framework P5.js.
+					</br></br>
+					CODE &lt<span class="logo" id="js" style="padding: 0"></span>&gt
+					<pre><code class="language-javascript">
+//particle.js
+
+const pre = 0.5
+
+class Particle {
+  constructor() {
+    this.fov = 70;
+    this.pos = createVector(sceneW / 2, sceneH / 2);
+    this.rays = [];
+    this.heading = 0;
+    for (let a = -this.fov / 2; a < this.fov / 2; a += pre) {
+      this.rays.push(new Ray(this.pos, radians(a)));
+    }
+  }
+
+  updateFOV(fov) {
+    this.fov = fov;
+    this.rays = [];
+    for (let a = -this.fov / 2; a < this.fov / 2; a += pre) {
+      this.rays.push(new Ray(this.pos, radians(a) + this.heading));
+    }
+  }
+
+  rotate(angle) {
+    this.heading += angle;
+    let index = 0;
+    for (let a = -this.fov / 2; a < this.fov / 2; a += pre) {
+      this.rays[index].setAngle(radians(a) + this.heading);
+      index++;
+    }
+  }
+
+  move(amt) {
+    const vel = p5.Vector.fromAngle(this.heading);
+    vel.setMag(amt);
+    this.pos.add(vel);
+  }
+
+  update(x, y) {
+    this.pos.set(x, y);
+  }
+
+  look(walls) {
+    
+    const scene = [];
+    const red = [];
+    const green = [];
+    const blue = [];
+
+    for (let i = 0; i < this.rays.length; i++) {
+      const ray = this.rays[i];
+      let closest = null;
+      let record = Infinity;
+      for (let wall of walls) {
+        const pt = ray.cast(wall);
+        if (pt) {
+          let d = p5.Vector.dist(this.pos, pt);
+          const a = ray.dir.heading() - this.heading;
+          if (!mouseIsPressed) {
+            d *= cos(a);
+          }
+          if (d < record) {
+            record = d;
+            closest = pt;
+            red[i] = wall.R;
+            green[i] = wall.G;
+            blue[i] = wall.B;
+          }
+        }
+      }
+      if (closest) {
+        // colorMode(HSB);
+        stroke((i + frameCount * 2) % 360, 255, 255, 50);
+        stroke(255, 100);
+        line(this.pos.x, this.pos.y, closest.x, closest.y);
+      }
+      scene[i] = record;
+    }
+    return [scene, red, green, blue];
+  }
+
+  show() {
+    fill(255);
+    ellipse(this.pos.x, this.pos.y, 4);
+    for (let ray of this.rays) {
+      ray.show();
+    }
+  }
+}
+
+//ray.js
+
+class Ray {
+  constructor(pos, angle) {
+    this.pos = pos;
+    this.dir = p5.Vector.fromAngle(angle);
+  }
+
+  setAngle(angle) {
+    this.dir = p5.Vector.fromAngle(angle);
+  }
+
+  lookAt(x, y) {
+    this.dir.x = x - this.pos.x;
+    this.dir.y = y - this.pos.y;
+    this.dir.normalize();
+  }
+
+  show() {
+    stroke(255);
+    push();
+    translate(this.pos.x, this.pos.y);
+    line(0, 0, this.dir.x * 10, this.dir.y * 10);
+    pop();
+  }
+
+  cast(wall) {
+    
+    const x1 = wall.a.x;
+    const y1 = wall.a.y;
+    const x2 = wall.b.x;
+    const y2 = wall.b.y;
+
+    const x3 = this.pos.x;
+    const y3 = this.pos.y;
+    const x4 = this.pos.x + this.dir.x;
+    const y4 = this.pos.y + this.dir.y;
+
+    const den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+    if (den == 0) {
+      return;
+    }
+
+    const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den;
+    const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / den;
+    if (t > 0 && t < 1 && u > 0) {
+      const pt = createVector();
+      pt.x = x1 + t * (x2 - x1);
+      pt.y = y1 + t * (y2 - y1);
+      return pt;
+    } else {
+      return;
+    }
+  }
+}
+
+//wall.js
+
+class Wall {
+  constructor(x1, y1, x2, y2, R, G, B) {
+    this.a = createVector(x1, y1);
+    this.b = createVector(x2, y2);
+    this.R = R;
+    this.G = G;
+    this.B = B;
+  }
+
+  show() {
+    stroke(this.R, this.G, this.B);
+    line(this.a.x, this.a.y, this.b.x, this.b.y);
+  }
+}
+
+//core.js
+
+let walls = [];
+let ray;
+let particle;
+let xoff = 0;
+let yoff = 10000;
+let carte = [];
+
+const sceneW = 400;
+const sceneH = 400;
+
+const w_width = 1360;
+const w_height = 765;
+
+function setup() {
+
+  createCanvas(w_width, w_height);
+
+  for (let x = 0; x < 10; x++) {
+
+    let row = [];
+    
+    for (let j = 0; j < 10; j++) {
+
+      row[j] = Math.round(Math.random()*4);
+
+    }
+
+    carte[x] = row;
+
+  }
+
+  for (let i = 0; i < carte.length; i++) {
+
+    for (let j=0; j < carte[i].length; j++) {
+
+      if (carte[i][j] == 1) {
+
+        let R = 255;//Math.round(Math.random()*255);
+        let G = 0;//Math.round(Math.random()*255);
+        let B = 0;//Math.round(Math.random()*255);
+
+        let x = [0,1,1,0];
+        let y = [0,0,1,1];
+
+        x = x.map(v => v*40 + j*40);
+        y = y.map(v => v*40 + i*40);
+
+        walls.push(new Wall(x[0], y[0], x[1], y[1], R, G, B));
+        walls.push(new Wall(x[1], y[1], x[2], y[2], R, G, B));
+        walls.push(new Wall(x[2], y[2], x[3], y[3], R, G, B));
+        walls.push(new Wall(x[3], y[3], x[0], y[0], R, G, B));
+
+      }
+
+    }
+
+  }
+
+  walls.push(new Wall(0, 0, sceneW, 0, 25, 25, 25));
+  walls.push(new Wall(sceneW, 0, sceneW, sceneH, 25, 25, 25));
+  walls.push(new Wall(sceneW, sceneH, 0, sceneH, 25, 25, 25));
+  walls.push(new Wall(0, sceneH, 0, 0, 25, 25, 25));
+
+  eye = new Particle();
+}
+
+function changeFOV(d) {
+  const fov = d;
+  eye.updateFOV(fov);
+}
+
+function draw() {
+  if (keyIsDown(LEFT_ARROW)) {
+    eye.rotate(-0.1);
+  } else if (keyIsDown(RIGHT_ARROW)) {
+    eye.rotate(0.1);
+  } else if (keyIsDown(UP_ARROW)) {
+    eye.move(2);
+  } else if (keyIsDown(DOWN_ARROW)) {
+    eye.move(-2);
+  }
+
+  background(0);
+  for (let wall of walls) {
+    wall.show();
+  }
+  eye.show();
+
+  const scene = eye.look(walls)[0];
+  const red = eye.look(walls)[1];
+  const green = eye.look(walls)[2];
+  const blue = eye.look(walls)[3];
+  const w = (w_width-sceneW) / scene.length;
+  push();
+  translate(sceneW, w_height/4);
+  for (let i = 0; i < scene.length; i++) {
+    noStroke();
+    //const sq = scene[i] * scene[i];
+    //const wSq = sceneW * sceneW;
+    //const b = map(sq, 0, wSq, 255, 0);
+    const R = red[i] * (1 - scene[i] / Math.sqrt( (sceneW / 1.5)**2));
+    const G = green[i] * (1 - scene[i] / Math.sqrt( (sceneW / 1.5)**2));
+    const B = blue[i] * (1 - scene[i] / Math.sqrt( (sceneW / 1.5)**2)); 
+    const h = map(scene[i], 0, sceneW, w_height, 0);
+    fill(R, G, B);
+    rectMode(CENTER);
+    rect(i * w + w / 2, sceneH / 2, w + 1, h);
+  }
+  pop();
+
+  // ray.show();
+  // ray.lookAt(mouseX, mouseY);
+
+  // let pt = ray.cast(wall);
+  // if (pt) {
+  //   fill(255);
+  //   ellipse(pt.x, pt.y, 8, 8);
+  // }
+}
+
+					</code></pre>
+
+				</div>
+
+			</div>
+
+			<div class="card">
+
+				<div class="cardTitle"> Bezier Generator </div>
+
+				<div class="cardTech">
+					<span class="logo_big" id="js"></span>
+				</div>
+
+				<div class="cardLinks">
+					<div class="git" onclick="window.location.href='https://github.com/AntonyMadaleno/BezierCurve_generator'">
+						<span class="logo_big" id="github"></span>
+					</div>
+					<button onclick="window.location.href='projets/Bezier_curve/main.html'"> Démo </button>
+				</div>
+
+				<div class="cardDescription">
+					Un petit outil qui permet de généré des courbes de bézier Quadratique et de récupérer leurs équation dans la console du naviguateur.
+
+				</br></br>	
+					CODE &lt<span class="logo" id="js" style="padding: 0"></span>&gt
+					<pre><code class="language-javascript">
+//svg.js
+
+let screen = document.querySelector('#svg_window');
+
+class Svg {
+
+	constructor(elm) {
+		this.screen = document.querySelector(elm);
+		this.w = this.screen.clientWidth;
+		this.h = this.screen.clientHeight;
+		this.circles = new Array();
+		this.lines = new Array();
+		this.labels = new Array();
+	}
+
+	createCircle(fill, stroke, radius, x, y) {//permet de créer un cercle
+		let circle = document.createElement('circle');
+		circle.setAttribute("fill", fill);
+		circle.setAttribute("stroke", stroke);
+		circle.setAttribute("stroke-width", 2);
+		circle.setAttribute("r", radius);
+		circle.setAttribute("cx", x);
+		circle.setAttribute("cy", y);
+
+		this.screen.appendChild(circle);
+		this.circles.push(circle);
+		this.update();
+		return circle;
+	}
+
+	createLine(stroke, x1, y1, x2, y2) {//permet de créer une ligne
+		let line = document.createElement('line');
+		line.setAttribute("stroke", stroke);
+		line.setAttribute("stroke-width", 1);
+		line.setAttribute("x1", x1);
+		line.setAttribute("y1", y1);
+		line.setAttribute("x2", x2);
+		line.setAttribute("y2", y2);
+
+		this.screen.appendChild(line);
+		this.lines.push(line);
+		this.update();
+		return line;
+	}
+
+	createLabel(fill, x, y, str) {//permet de créer une ligne
+		let l = document.createElement('text');
+		l.innerHTML = str;
+		l.setAttribute("fill", fill);
+		l.setAttribute("x", x);
+		l.setAttribute("y", y);
+
+		this.screen.appendChild(l);
+		this.labels.push(l);
+		this.update();
+		return l;
+	}
+
+	createCurve(stroke, arr, p) {
+
+		if(arr.length == 8) {// on execute que s'il y'a 4 point de contrôle
+
+			let rx;
+			let ry;
+
+			let sx;
+			let sy;
+
+			//on récupère la position de chaque point de contrôle (a est le depart, d l'arriver)
+			let ax = arr[0]; let ay = arr[1];
+			let bx = arr[2]; let by = arr[3];
+			let cx = arr[4]; let cy = arr[5];
+			let dx = arr[6]; let dy = arr[7];
+
+			for (let t = 0; t < p; t++) {//on trace la courbe
+
+				rx = ax*(1-(t/p))**3 + bx*3*(t/p)*(1-(t/p))**2 + cx*3*((t/p)**2)*(1-(t/p)) + dx*(t/p)**3;
+				ry = ay*(1-(t/p))**3 + by*3*(t/p)*(1-(t/p))**2 + cy*3*((t/p)**2)*(1-(t/p)) + dy*(t/p)**3;
+
+				let u = (t+1)/p;
+
+				sx = ax*(1-u)**3 + bx*3*u*(1-u)**2 + cx*3*(u**2)*(1-u) + dx*u**3;
+				sy = ay*(1-u)**3 + by*3*u*(1-u)**2 + cy*3*(u**2)*(1-u) + dy*u**3;
+
+				this.createLine(stroke, rx, ry, sx, sy);
+			}
+
+			this.createLine("#666", ax, ay, bx, by);
+			this.createLine("#666", cx, cy, dx, dy);
+
+		}
+
+	}
+
+	update() {this.screen.innerHTML += "";}
+
+}
+
+//core.js
+
+let svg; //the drawing frame to render the graph
+let curves = new Array(); //contient les différents points de controles.
+let menu_state = 0;
+let cx;
+let cy;
+
+let curve_count = 0;
+let circle_count = 0;
+let line_count = 0;
+let point_count = 0;
+
+function load() {
+	svg = new Svg("#svg_window");
+
+	cx = document.querySelector('#svg_window').clientWidth/2;
+	cy = document.querySelector('#svg_window').clientHeight/2;
+
+	//axe principaux
+	svg.createCircle("#000", "#000", "2px", cx, cy);
+	svg.createLine("#000", 0, cy, cx*2, cy);
+	svg.createLine("#000", cx, 0, cx, cy*2);
+
+
+	//graduation
+	for (let i = 1; i < 9; i++) {
+		svg.createCircle("#000", "#000", "1px", cx + 100*i, cy);
+		svg.createCircle("#000", "#000", "1px", cx - 100*i, cy);
+	}
+
+	for (let i = 1; i < 5; i++) {
+		svg.createCircle("#000", "#000", "1px", cx, cy + 100*i);
+		svg.createCircle("#000", "#000", "1px", cx, cy - 100*i);
+	}
+
+}
+
+function menu(m) {
+
+	let menu1 = document.querySelector('#cr_point');
+	let menu2 = document.querySelector('#cr_line');
+	let menu3 = document.querySelector('#cr_circle');
+	let menu4 = document.querySelector('#cr_curve');
+
+	if (m == 0) {
+		//hide all
+		menu1.style = "display: none;";
+		menu2.style = "display: none;";
+		menu3.style = "display: none;";
+		menu4.style = "display: none;";
+	}
+
+	if (m == 1) {
+		//menu de creation de point
+		menu(0);
+
+		if (menu_state != 1) {
+			menu1.style = "display: flex;";
+			menu_state = 1;
+		}
+		else {
+			menu_state = 0;
+		}
+				
+	}
+
+	if (m == 2) {
+		//menu de creation de ligne
+		menu(0);
+
+		if (menu_state != 2) {
+			menu2.style = "display: flex;";
+			menu_state = 2;
+		}
+		else {
+			menu_state = 0;
+		}
+
+	}
+
+	if (m == 3) {
+		//menu de creation de cercle
+		menu(0);
+
+		if (menu_state != 3) {
+			menu3.style = "display: flex;";
+			menu_state = 3;
+		}
+		else {
+			menu_state = 0;
+		}
+
+	}
+
+	if (m == 4) {
+		//menu de creation de courbe de bézier
+		menu(0);
+		if (menu_state != 4) {
+			menu4.style = "display: flex;";
+			menu_state = 4;
+		}
+		else {
+			menu_state = 0;
+		}
+
+	}
+
+	if (m == 5) {
+		//menu de modification
+		
+	}
+
+}
+
+function point() {
+	c = "" + document.querySelector('#point_color').value; //string type
+	x = cx + 100*document.querySelector('#point_x').value;
+	y =	cy - 100*document.querySelector('#point_y').value;
+
+	svg.createCircle(c, c, "1px", x, y);
+
+	menu_state = 0;
+	menu(0);
+
+}
+
+function line() {
+
+	c = "" + document.querySelector('#line_color').value; //string type
+	ax = cx + 100*document.querySelector('#line_ax').value;
+	ay = cy - 100*document.querySelector('#line_ay').value;
+	bx = cx + 100*document.querySelector('#line_bx').value;
+	by = cy - 100*document.querySelector('#line_by').value;
+
+	svg.createLine(c, ax, ay, bx, by);
+
+	menu_state = 0;
+	menu(0);
+
+}
+
+function circle() {
+
+	c = "" + document.querySelector('#c_color').value; //string type
+	b = "" + document.querySelector('#c_border').value; //string type
+	cx = cx + 100*document.querySelector('#circle_x').value;
+	cy = cy - 100*document.querySelector('#circle_y').value;
+	r = 100*document.querySelector('#c_radius').value + "px";//string type
+
+	svg.createCircle(c, b, r, cx, cy);
+
+	menu_state = 0;
+	menu(0);
+
+}
+
+function curve() {
+
+	c = "" + document.querySelector('#curve_color').value; //string type
+	x1 = cx + 100*document.querySelector('#curve_x1').value;
+	y1 = cy - 100*document.querySelector('#curve_y1').value;
+	x2 = cx + 100*document.querySelector('#curve_x2').value;
+	y2 = cy - 100*document.querySelector('#curve_y2').value;
+	x3 = cx + 100*document.querySelector('#curve_x3').value;
+	y3 = cy - 100*document.querySelector('#curve_y3').value;
+	x4 = cx + 100*document.querySelector('#curve_x4').value;
+	y4 = cy - 100*document.querySelector('#curve_y4').value;
+
+	arr = [x1,y1,x2,y2,x3,y3,x4,y4];
+
+	svg.createCurve(c, arr, 100);
+
+	svg.createCircle(c, c, "1px", x1, y1);
+	svg.createLabel(c, x1 + 25, y1 - 10, "C(" + curve_count + ")A(" + (x1-cx)/100 + "," + -1*(y1-cy)/100 + ")");
+	svg.createCircle(c, c, "1px", x2, y2);
+	svg.createLabel(c, x2 + 25, y2 - 10, "C(" + curve_count + ")B(" + (x2-cx)/100 + "," + -1*(y2-cy)/100 + ")");
+	svg.createCircle(c, c, "1px", x3, y3);
+	svg.createLabel(c, x3 + 25, y3 - 10, "C(" + curve_count + ")C(" + (x3-cx)/100 + "," + -1*(y3-cy)/100 + ")");
+	svg.createCircle(c, c, "1px", x4, y4);
+	svg.createLabel(c, x4 + 25, y4 - 10, "C(" + curve_count + ")D(" + (x4-cx)/100 + "," + -1*(y4-cy)/100 + ")");
+
+	let xstr =(x1-cx)/100+" * (1-t)^3 + " +(x2-cx)/100+ " * 3 * t(1-t)^2 + " + (x3-cx)/100 + " * 3 * (t^2)*(1-t) + " + (x4-cx)/100 + " * 3 * (t^3)";
+	let ystr = -(y1-cy)/100+"*(1-t)^3+"-(y2-cy)/100+" * 3 * t(1-t)^2 + " - (y3-cy)/100 + " * 3 * (t^2)*(1-t) + " - (y4-cy)/100 + " * 3 * (t^3)"; 
+
+	console.log("C(" + curve_count + ")X = " + xstr);
+	console.log("C(" + curve_count + ")Y = " + ystr);
+
+	let ax = (x1 - cx)/100;
+	let ay = -1*(y1 - cy)/100;
+	let bx = (x2 - cx)/100;
+	let by = -1*(y2 - cy)/100;
+	let ex = (x3 - cx)/100;
+	let ey = -1*(y3 - cy)/100;
+	let fx = (x4 - cx)/100;
+	let fy = -1*(y4 - cy)/100;
+
+	let dxstr = 3*ax + " * (t-1)^2 + " + bx + " * (2t * (t-1) + (t-1)^2) + " + ex + " * t * ((t-1) + t) + " + 3*fx + " * t^2";
+	let dystr = 3*ay + " * (t-1)^2 + " + by + " * (2t * (t-1) + (t-1)^2) + " + ey + " * t * ((t-1) + t) + " + 3*fy + " * t^2";
+
+	console.log("C(" + curve_count + ")X' = " + dxstr);
+	console.log("C(" + curve_count + ")Y' = " + dystr);
+
+	let v1 = bx - ax;
+	let v2 = by - ay;
+	let tstart = "TStart : y = " + v2/v1 + " * x + " + -1*((v2/v1)*ax - ay) ;
+
+	if (ax == bx) {tstart = "TStart : x = " + ax;}
+	console.log(tstart);
+
+	let v3 = fx - ex;
+	let v4 = fy - ey;
+	let tend = "TEnd : y = " + v4/v3 + " * x + " + -1*((v4/v3)*ex - ey) ;
+
+	if (ex == fx) {tend = "TEnd : x = " + fx;}
+	console.log(tend);
+
+	menu_state = 0;
+	curve_count++;
+	menu(0);
+
+}
+					</code></pre>
+
+				</div>
+
+			</div>
+
+			<div class="card">
+
+				<div class="cardTitle"> Jeu SVG </div>
+
+				<div class="cardTech">
+					<span class="logo_big" id="js"></span>
+				</div>
+
+				<div class="cardLinks">
+					<div class="git" onclick="window.location.href='https://github.com/AntonyMadaleno/DodgeGame'">
+						<span class="logo_big" id="github"></span>
+					</div>
+					<button onclick="window.location.href='projets/svgGame/index.html'"> Démo </button>
+				</div>
+
+				<div class="cardDescription">
+					Un jeu ou fait à partir des technologie JS et SVG.
+
+				</br></br>	
+					CODE &lt<span class="logo" id="js" style="padding: 0"></span>&gt
+					<pre><code class="language-javascript">
+//svg.js
+
+class Svg {
+
+	constructor(elm) {
+		this.screen = document.querySelector(elm);
+		this.w = this.screen.clientWidth;
+		this.h = this.screen.clientHeight - 75;
+		this.circles = new Array();
+		this.lines = new Array();
+		this.labels = new Array();
+		this.center_x = this.w/2;
+		this.center_y = this.h/2;
+	}
+
+	createCircle(fill, stroke, radius, x, y) {//permet de créer un cercle
+		let circle = document.createElement('circle');
+		circle.setAttribute("fill", fill);
+		circle.setAttribute("stroke", stroke);
+		circle.setAttribute("stroke-width", 2);
+		circle.setAttribute("r", radius);
+		circle.setAttribute("cx", this.center_x + x);
+		circle.setAttribute("cy", this.center_y + y);
+
+		this.screen.appendChild(circle);
+		this.circles.push(circle);
+		this.update();
+		return circle;
+	}
+
+	createLine(stroke, x1, y1, x2, y2) {//permet de créer une ligne
+		let line = document.createElement('line');
+		line.setAttribute("stroke", stroke);
+		line.setAttribute("stroke-width", 1);
+		line.setAttribute("x1", this.center_x + x1);
+		line.setAttribute("y1", this.center_y +  y1);
+		line.setAttribute("x2", this.center_x + x2);
+		line.setAttribute("y2", this.center_y + y2);
+
+		this.screen.appendChild(line);
+		this.lines.push(line);
+		this.update();
+		return line;
+	}
+
+	createLabel(fill, x, y, str) {//permet de créer une ligne
+		let l = document.createElement('text');
+		l.innerHTML = str;
+		l.setAttribute("fill", fill);
+		l.setAttribute("x", this.center_x + x);
+		l.setAttribute("y", this.center_y + y);
+
+		this.screen.appendChild(l);
+		this.labels.push(l);
+		this.update();
+		return l;
+	}
+
+	createCurve(stroke, arr, p) {
+
+		if(arr.length == 8) {// on execute que s'il y'a 4 point de contrôle
+
+			let rx;
+			let ry;
+
+			let sx;
+			let sy;
+
+			//on récupère la position de chaque point de contrôle (a est le depart, d l'arriver)
+			let ax = arr[0]; let ay = arr[1];
+			let bx = arr[2]; let by = arr[3];
+			let cx = arr[4]; let cy = arr[5];
+			let dx = arr[6]; let dy = arr[7];
+
+			for (let t = 0; t < p; t++) {//on trace la courbe
+
+				rx = ax*(1-(t/p))**3 + bx*3*(t/p)*(1-(t/p))**2 + cx*3*((t/p)**2)*(1-(t/p)) + dx*(t/p)**3;
+				ry = ay*(1-(t/p))**3 + by*3*(t/p)*(1-(t/p))**2 + cy*3*((t/p)**2)*(1-(t/p)) + dy*(t/p)**3;
+
+				let u = (t+1)/p;
+
+				sx = ax*(1-u)**3 + bx*3*u*(1-u)**2 + cx*3*(u**2)*(1-u) + dx*u**3;
+				sy = ay*(1-u)**3 + by*3*u*(1-u)**2 + cy*3*(u**2)*(1-u) + dy*u**3;
+
+				this.createLine(stroke, rx, ry, sx, sy);
+			}
+
+			this.createLine("#666", ax, ay, bx, by);
+			this.createLine("#666", cx, cy, dx, dy);
+
+		}
+
+	}
+
+	update() {this.screen.innerHTML += "";}
+	empty() {this.screen.innerHTML = "";}
+
+}
+
+//Rocks.js
+
+class Rock {
+
+	constructor(display, time)
+	{
+		this.disp = display;
+		this.size = Math.round(Math.random()*40) + 10;
+
+		let mult = 1 + (time/9000);
+
+		if (mult > 4)
+		{
+			mult = 4;
+		}
+
+		this.speed = (Math.round(Math.random()*15) + 5) * mult;
+		this.x = (this.disp.w)/2;
+		this.y = Math.round(Math.random()*(this.disp.h)) - (this.disp.h)/2;
+
+		this.disp.createCircle("#555555", "#ffffff", this.size, this.x, this.y);
+	}
+
+	update()
+	{
+		this.x -= this.speed;
+		this.disp.createCircle("#555555", "#ffffff", this.size, this.x, this.y);
+	}
+
+}
+
+//core.js
+
+let d;
+
+let pause = true;
+let restart = false;
+
+const vmax = 12;
+const amod = 4;
+const max_rocks = 25;
+
+const timer = document.getElementById("timer");
+const score = document.getElementById("score");
+const bscore = document.getElementById("best_score");
+
+let ay = 0;
+let sc = 0;
+let bc = 0;
+
+let min = 0;
+
+let rocks = new Array();
+
+const pause_win = eventWindow("PAUSE", 
+
+					{
+						score: sc,
+					}
+
+				);
+pause_win.style.display = "none";
+
+function load()
+{
+
+	d = new Svg("#render");
+
+	run(-500,0,0,0);
+
+}
+
+function run(x,y,vy,t)
+{
+	if(!pause)
+	{
+		if (t%5 == 0 && Math.round(Math.random()) == 1 && rocks.length < max_rocks)
+		{
+			rocks.push(new Rock(d,t));
+		}
+		
+		vy += ay;
+		ay = 0;
+
+		if (Math.abs(vy) > vmax)
+		{
+			if (vy > 0) { vy = vmax;}
+			else { vy = -vmax;}
+		}
+
+		y -= vy;
+
+		if (Math.abs(y) > (d.h)/2)
+		{
+			vy = -vy;
+		}
+
+		d.empty();
+
+		for (let i = 0; i < rocks.length; i++)
+		{
+			rocks[i].update();
+			if (rocks[i].x < -(d.w/2))
+			{
+				sc += Math.round(rocks[i].size*rocks[i].speed/50);
+				rocks.splice(i, 1);
+				i--;
+			}
+			else 
+			{
+
+				//test if it collided
+
+				let dist = (x-rocks[i].x)**2 + (y-rocks[i].y)**2;
+
+				if (dist < (8 + rocks[i].size)**2)
+				{
+					eventWindow("END", 
+
+						{
+							score: sc,
+						}
+
+					);
+
+					if (bc < sc)
+					{
+						bc = sc;
+						bscore.innerHTML = bc;
+					}
+					pause = true;
+				}
+
+			}
+			
+		}
+
+		score.innerHTML = sc;
+
+		d.createCircle("#aa0000", "#ff0000", 8, x, y);
+
+		t++;
+
+		if (t%60 == 0) {updateTimer(t/60);}
+
+	}
+
+	if(!restart) {
+		setTimeout(run, 1000/60, x, y, vy, t);
+	}
+	else 
+	{
+		d.empty();
+		restart = false;
+		document.querySelector("body").removeChild(document.getElementsByName("END")[0]);
+		run(-500,0,0,0);
+	}
+
+	
+
+
+}
+
+function eventWindow(name, args)
+{
+
+	let win = document.createElement('div');
+
+	win.setAttribute("class", "eventWindow");
+	win.setAttribute("name", name);
+
+	let title = document.createElement('div');
+	title.setAttribute("class", "event_title");
+	title.setAttribute("name", "title");
+	title.innerHTML = name;
+
+	win.appendChild(title);
+
+	let chrono = document.createElement('div');
+	chrono.setAttribute("class", "event_message");
+	chrono.setAttribute("name", "timer");
+	chrono.innerHTML = "timer &nbsp; &nbsp; &nbsp;" + timer.innerHTML;
+
+	win.appendChild(chrono);
+
+	for (let key in args)
+	{
+		let object = document.createElement('div');
+		object.setAttribute("class", "event_message");
+		object.setAttribute("name", key);
+		object.innerHTML = key + " &nbsp; &nbsp; &nbsp;" + args[key];
+
+		win.appendChild(object);
+	}
+
+	document.querySelector("body").appendChild(win);
+
+	return win;
+
+}
+
+function updateTimer(t)
+{
+	if (t >= 60)
+	{
+		min = (t-t%60)/60;
+	}
+	timer.innerHTML = min + " : " + t%60;
+}
+
+window.addEventListener("keydown", function(event) {
+
+		if(event.defaultPrevented)
+		{
+			return;
+		}
+
+		if(event.key == "ArrowDown")
+		{
+			ay = -amod;
+		}
+
+		if(event.key == "ArrowUp")
+		{
+			ay = amod;
+		}
+
+		if(event.key == " ")
+		{
+			pause = !pause;
+
+			if (pause) 
+			{
+				pause_win.style.display = "flex";
+			}
+			else 
+			{
+				pause_win.style.display = "none";
+			}
+		}
+
+		return;
+
+	}
+)
+
+function retry()
+{
+	sc = 0;
+	ay = 0;
+	timer.innerHTML = "0 : 0";
+	rocks = new Array();
+	restart = true;
+}
+
+load();
+					</code></pre>
+
+				</div>
+
+			</div>
+
+			<div class="card">
+
+				<div class="cardTitle"> RayCasting 3D </div>
+
+				<div class="cardTech">
+					<span class="logo_big" id="python"></span>
+				</div>
+
+				<div class="cardLinks">
+					<div class="git" onclick="window.location.href='https://github.com/AntonyMadaleno/RayCaster_python">
+						<span class="logo_big" id="github"></span>
+					</div>
+				</div>
+
+				<div class="cardDescription">
+					Un alogrithme de génération d'image par rayCasting en espace 3D.
+
+				</br></br>	
+					CODE &lt<span class="logo" id="python" style="padding: 0"></span>&gt
+					<pre><code class="language-python">
+#a class to use tables/arrays | une classe pour les array/tableau
+from random import *
+from math import *
+from os import system, name
+
+class Tool:
+
+	def clear(): 
+  
+	    # for windows 
+	    if name == 'nt': 
+	        _ = system('cls') 
+	  
+	    # for mac and linux(here, os.name is 'posix') 
+	    else: 
+	        _ = system('clear')
+
+	def float(x,n):
+		if (n >= 0):
+			return round(x*(10**n) )/(10**n)
+
+	def pgcd(a,b):
+
+		r = 1
+
+		if (a < b):
+			temp = a
+			a = b
+			b = temp
+
+		while (r != 0):
+			r = a%b
+			a = b
+			b = r
+
+		return a
+
+	def bezout(a,b):
+
+		if(b == 0):
+			return [a,1,0]
+
+		q = a//b
+		r = a - q*b
+
+		d,u,v = Tool.bezout(b,r)
+
+		return [d,v,u-q*v]
+
+	def binome(n, k):
+		return Tool.factoriel(n) / ( Tool.factoriel(k)*Tool.factoriel(n-k) );
+
+	def factoriel(n):
+		r = 1;
+
+		for i in range (1, n+1):
+			r = r*i;
+
+		return r;
+		
+	def bernstein(t, n, i):
+
+		return casteljauPoly(Tool.binome(n,i)*(t**i)*( (1-t)**(n-i) ))
+
+	def casteljau(b, n): #b should be given as a matrice not an array
+
+		if (type(b) == Array):
+
+			m = Matrice.create(1,1)
+			m.table.get(0).table = b.table
+			return casteljauPoly(Tool.casteljau(m, 0))
+
+		else:
+
+			if (b.table.get(n).length() == 1):
+				r = b
+				return r
+
+			else:
+				b.table.push(Array())
+				for i in range (b.table.get(n).length() - 1):
+					b.table.get(n+1).push( (b.get(i,n) + b.get(i+1,n) )/2 )
+
+				return casteljauPoly(Tool.casteljau(b, n+1))
+
+	def casteljauPoly(mat):
+
+		d = mat.table.length()
+		b0 = Array()
+		b1 = Array()
+
+		for i in range (0,d):
+
+			b0.push(mat.get(0,i))
+			b1.push(mat.get(i, d - (d-i) ))
+
+		return (b0, b1)
+
+
+
+
+	def dist(a,b):
+
+		if (len(a) == len(b)):
+
+			d = 0
+
+			for i in range (0, len(a)):
+
+				d += (a[i] - b[i])**2
+
+			return sqrt(d)
+
+
+	def Average(array):
+
+		res = 0
+
+		for i in range (0, len(array)):
+
+			res = res + array[i]
+
+		res = res / len(array)
+
+		return res
+
+
+	def Quartile(array, n):
+
+		a = Array()
+		a.table = array
+
+		res = a.Quartile(n).table
+
+		return res 
+
+				
+
+
+class Array:
+
+	#constructor
+	def __init__( self ):
+		self.table = []
+		self.startIndex = 0
+
+	#utiliser par un print(type Array)
+	def __str__(self):
+		text = "["
+
+		for i in range(0,self.length() - 1):
+			text += "(" + str(self.startIndex + i) + "): " + str(self.get(i)) + ", "
+
+		text +=  "(" + str(self.startIndex + self.length()-1)  + "): " + str(self.get(self.length()-1)) + "]"
+
+		return text
+		del text
+
+	def __eq__(self, other):
+		if (self.table == other.table and self.startIndex == other.startIndex):
+			return True
+		else:
+			return False
+
+	def __ne__(self, other):
+		if (self == other):
+			return False
+		else:
+			return True
+
+	def __lt__(self, other):
+		return False
+	def __gt__(self, other):
+		return False
+
+	def __le__(self, other):
+		if (self == other):
+			return True
+		else:
+			return False
+
+	def __ge__(self, other):
+		if (self == other):
+			return True
+		else:
+			return False
+
+	def __add__(self, other):
+		ret = Array()
+		l = max(self.length(), other.length())
+
+		if (self.length() > other.length()):
+
+			for i in range (other.length() - 1, l-1):
+				other.push(0);
+
+		else:
+
+			if (self.length() < other.length()):
+
+				for i in range (self.length() - 1, l-1):
+					self.push(0);
+
+		for i in range(0, l):
+			ret.push(self.get(i) + other.get(i))
+
+		if (self.length() > other.length()):
+			ret.table += self.select(other.length(), self.length()-1).table
+		if (self.length() < other.length()):
+			ret.table += other.select(self.length(), other.length()-1).table
+
+		return ret
+		del ret
+
+	def __sub__(self, other):
+		ret = Array()
+		l = min(self.length(), other.length() )
+
+		if (self.length() > other.length()):
+
+			for i in range (other.length() - 1, l-1):
+				other.push(0);
+
+		else:
+
+			if (self.length() < other.length()):
+
+				for i in range (self.length(), l):
+					self.push(0);
+
+		for i in range(0, l):
+			ret.push(other.get(i) - self.get(i))
+
+		if (self.length() > other.length()):
+			ret += self.select(other.length(), self.length()-1).table
+		if (self.length() < other.length()):
+			ret += other.select(self.length(), other.length()-1).negative().table
+
+		return ret
+		del ret
+
+	def coef(self, k):
+
+		l = self.length()
+
+		for i in range(0, l):
+			self.set(i, self.get(i) * k)
+
+
+	#return length of the array
+	def length(self):
+		return len(self.table)
+
+	#renvoi la valeur a l'index i
+	def get(self, i):
+		return self.table[i]
+
+	def set(self, i, v):
+		self.table[i] = v
+
+	#add a new value at the end of the array
+	def push(self, n):
+		temp = [n]
+		self.table += temp
+		del temp
+
+	#renvoi la liste de valeur comprise entre l'index a et b compris
+	def select(self,a,b):
+
+		temp = Array()
+
+		for i in range(a , b+1):
+			temp.push(self.get(i))
+
+		return temp
+
+	#return the smallest value of the array
+	def min(self):
+
+		mini = self.table[0]
+
+		for i in range(1, self.length()):
+			if mini > self.get(i):
+				mini = self.get(i)
+
+		return mini
+		del mini
+
+	#return the highest value of the array
+	def max(self):
+
+		maxi = self.table[0]
+
+		for i in range(1, self.length()):
+			if maxi < self.get(i):
+				maxi = self.get(i)
+
+		return maxi
+		del maxi
+
+	def search(self, n):
+
+		ret = Array()
+
+		for i in range(0, self.length()):
+			if (self.get(i) == n):
+				ret.push(i)
+
+		return ret
+		del ret
+
+	#retire la valeur a l'index i
+	def removeAtIndex(self, i):
+		del self.table[i]
+
+	#retire une partie de la liste
+	def removeSection(self,a,b):
+		for i in range(a,b+1):
+			del self.table[a]
+
+	#echange les valeurs aux index donné
+	def swap(self, i1, i2):
+
+		if(i1 != i2):
+			if (i1 > i2):
+				temp = i1
+				i1 = i2
+				i2 = temp
+				del temp
+
+			v1 = self.get(i1)
+			v2 = self.get(i2)
+
+			self.table = self.select(0,i1-1).table + [v2] + self.select(i1+1,i2-1).table + [v1] + self.select(i2+1 ,self.length()- 1).table
+
+			del v1
+			del v2
+
+	#inverse le sens du tableau
+	def inverse(self):
+
+		delta = self.length() - 1
+		i = 0
+
+		while (delta != 0 and delta != 1):
+			self.swap(i,self.length() - 1 - i)
+			i += 1
+			delta = self.length() - 2*i
+
+		del i
+		del delta
+
+	#inverse contained values
+	def negative(self):
+		ret = Array()
+
+		for i in range(0,self.length()):
+			ret.push(-self.get(i))
+
+		return ret
+		del ret
+
+	#sort the array from min to max (T(n) = O(n**2))
+	def sort(self):
+
+		for a in range(0, self.length()):
+
+			b = 0
+
+			for j in range(0, self.length()):
+
+				if(self.get(a) > self.get(j)):
+					b = j
+					self.swap(a,b)
+
+		self.inverse()
+
+	#compte le nombre de fois que n apparait dans la table
+	def count(self, n):
+
+		ret = 0
+
+		for i in range(0,self.length()):
+			if(self.get(i) == n):
+				ret += 1
+
+		return ret
+		del ret
+
+	#tableau des iterations
+	def bucket(self):
+
+		vmin = self.min()
+		vmax = self.max()
+
+		ret = Array()
+
+		for i in range(vmin, vmax+1):
+			ret.push(self.count(i))
+
+		ret.startIndex = vmin
+
+		return ret
+
+		del ret
+		del vmin
+		del vmax
+
+	def bucketSort(self):
+
+		bucket = self.bucket()
+		tab = []
+
+		for i in range(0, bucket.length()):
+			for j in range (0,bucket.get(i)):
+
+				tab += [i + bucket.startIndex]
+
+		self.table = tab
+
+		del tab
+		del bucket
+
+	#def fastSort(self):
+
+
+	#genere un Array randomiser
+	def random(l, mini, maxi):
+
+		ret = Array()
+
+		for i in range(0,l):
+			r = random() * (maxi - mini) + mini
+			ret.push(r)
+			del r
+
+		return ret
+		del ret
+
+	#renvoi la table des entier
+	def integer(self):
+
+		ret = Array()
+
+		for i in range(0,self.length()):
+			ret.push(round(self.table[i]))
+
+		return ret
+		del ret
+
+	def float(self, n):
+		ret = Array()
+
+		for i in range(0,self.length()):
+			ret.push(Tool.float(self.get(i), n))
+
+		return ret
+		del ret
+
+	def complete(self, n):
+
+		tmp = Array()
+
+		for i in range (0, self.startIndex):
+			tmp.push(n)
+
+		self.table = tmp.table + self.table
+		self.startIndex = 0;
+
+	def Quartile(self, n):
+
+		if (n >= 2):
+
+			res = Array()
+
+			self.sort()
+
+			for i in range(1, n):
+
+				val = self.get( i*round(self.length()/n) )
+				res.push(val) 
+
+			return res
+
+
+#class Matrice
+
+class Matrice:
+
+	def __init__(self):
+		self.table = Array()
+		self.cols = 0
+		self.lines = 0
+
+	def __str__(self):
+		string = ""
+
+		for i in range(0,self.table.length()):
+			string += str(self.table.get(i).table) + "\n"
+
+		return string
+
+	def __mul__(self, other):
+
+		if (other.cols == self.lines):
+			ret = Matrice.create(other.lines,self.cols)
+
+			for x in range(0, other.lines):
+			#on parcours les colones
+				for y in range(0, self.cols):
+				#on parcours les lignes				
+					value = 0
+					for n in range(0, other.cols):
+						value += other.get(x,n) * self.get(n,y)	
+					ret.set(y,x,value)
+
+			return ret
+
+		else:
+			if (self.cols == other.lines):
+				ret = Matrice.create(self.lines,other.cols)
+
+				for x in range(0, self.lines):
+				#on parcours les colones
+					for y in range(0, other.cols):
+					#on parcours les lignes				
+						value = 0
+						for n in range(0, self.cols):
+							value += self.get(x,n) * other.get(n,y)	
+						ret.set(y,x,value)
+
+				return ret
+
+		
+
+		if (self.cols != other.lines):
+			return "ERROR"
+
+	def create(c,l):
+
+		tab = Matrice()
+
+		for i in range (0,c):
+			row = Array()
+			for j in range(0,l):
+				row.push(0)
+			tab.table.push(row)
+
+		tab.cols = c
+		tab.lines = l
+
+		return tab
+
+	def random(c,l):
+		tab = Matrice()
+
+		for i in range (0,c):
+			row = Array()
+			for j in range(0,l):
+				row.push(round(random()*100))
+			tab.table.push(row)
+
+		tab.cols = c
+		tab.lines = l
+
+		return tab
+
+
+	def get(self, x, y):
+		return self.table.get(y).get(x)
+
+	def set(self, x, y, v):
+		self.table.get(y).set(x,v)
+
+
+
+#class des vecteurs
+
+class Vector(Array):
+
+	def __init__(self):
+		Array.__init__(self)
+
+	def prod3D(u, v):
+
+		x = u.table[1]*v.table[2] - u.table[2]*v.table[1]
+		y = u.table[2]*v.table[0] - u.table[0]*v.table[2]
+		z = u.table[0]*v.table[1] - u.table[1]*v.table[0]
+
+		r = Vector()
+		r.table = [x,y,z]
+
+		return r
+
+	def size(self):
+		ret = 0
+
+		for i in range(0, self.length()):
+			ret += self.table[i]**2
+
+		return ret**(1/2)
+
+	def rotate2D(self, deg):
+
+		if (self.length() == 2):
+			v = Vector()
+
+			i =	self.get(0)
+			j = self.get(1)
+			o = ((deg%360)/360)*2*pi
+
+			x =	Tool.float(i*cos(o) - j*sin(o), 2)
+			y = Tool.float(j*cos(o) + i*sin(o), 2)
+
+			v.push(x)
+			v.push(y)
+
+			return v
+		else:
+			return Vector()
+
+	def rotate3D(self, degH, degV):
+
+		if (self.length() == 3):
+			v = Vector()
+
+			i =	self.get(0)
+			j = self.get(1)
+			k = self.get(2)
+
+			angH = ((degH%360)/360)*2*pi
+			angV = ((degV%360)/360)*2*pi
+			
+			#rotation autour de l'axe Y
+			z = -i*sin(angH) + k*cos(angH)
+			x = i*cos(angH) + k*sin(angH)
+
+			#rotation autour de l'axe Z
+			y = i*sin(angV) + j*cos(angV)
+			
+
+			v.push(x)
+			v.push(y)
+			v.push(z)
+
+			v.normalize()
+
+			return v
+
+		else:
+			return Vector()
+
+	def normalize(self):
+
+		s = self.size()
+		self.coef(1/s)
+
+	def scalar(u, v):
+
+		if (u.length() == v.length()):
+
+			l = u.length()
+			r = 0;
+
+			for i in range (0,l):
+
+				r += u.get(i) * v.get(i)
+
+			return r
+
+	def fromTo3D(o, e):
+
+		r = Vector()
+		r.table = [e[0]-o[0], e[1]-o[1], e[2]-o[2]]
+		return r
+
+class Polynome(Array):
+
+	def __init__(self):
+		Array.__init__(self)
+
+	def __mul__(self, other):
+
+		d1 = self.length() - 1
+		d2 = other.length() - 1
+
+		s = Array()
+		o = Array()
+
+		s.table = self.table[:] #[:] sert a eviter d'utiliser la meme addresse mémoire (copie superficielle)
+		o.table = other.table[:]
+
+		sm = Matrice.create(s.length(),1)
+		om = Matrice.create(1,o.length())
+
+		om.table.set(0, o)
+
+		for i in range(0, s.length()):
+			sm.set(0, i, s.get(i))
+		
+		if(o > s):
+			m = om*sm
+		else:
+			m = sm*om
+
+		r = Polynome()
+		for i in range (0, m.cols):
+			temp = m.table.get(i)
+			temp.startIndex = i
+			temp.complete(0)
+			r = r + temp
+
+		return r
+
+	def eval(self, t):
+
+		r = 0
+
+		for i in range (0, self.length()):
+
+			r += self.get(i) * t**i
+
+		return r
+
+	def derive(self):
+
+		deg = self.length() - 1
+		r = Polynome()
+
+		for i in range(0, deg):
+			
+			r.push(self.get(deg-i)*i)
+
+		return r
+
+
+	def cano2bernst(p):
+
+		b = Array()
+		n = p.length()
+
+		for i in range(1,n+1):
+			bi = 0
+			for k in range(0, min(i,n)):
+
+				bi += ( p.get(k) * Tool.binome(i,k) ) / Tool.binome(n,k)
+
+			b.push(bi)
+		
+
+		return b
+
+#3D raycasting tools
+
+"""
+On notera qu'il serait intéressant d'utiliser du multithreading pour calculer la valeur de récu de plusieurs 
+pixel à la fois améliorant ainsi grnadement le temps de rendu sans impacter la qualité.
+
+"""
+
+from math import *
+from utils import *
+from PIL import Image, ImageDraw, ImageFont
+
+epsilon = 1e-9
+
+class Ray:
+
+  def __init__(self, position, angleH, angleV, fadeValue):
+
+    self.pos = position
+    self.vector = Vector()
+    self.vector.table = [1,0,0]
+    self.vector = self.vector.rotate3D(angleH, angleV)
+    self.intersect = []
+    self.fadeValue = fadeValue
+
+  def cast(self, obj):
+
+    r = obj.solve(self)
+
+    if (r != 0):
+
+      if (type(r) == list):
+        self.intersect.append([min(r), obj.color]) 
+
+      else:
+        self.intersect.append([r, obj.color])
+  
+  def minDist(self):
+
+    if (len(self.intersect) != 0):
+
+      r = self.intersect[0][0]
+
+      for i in range (1, len(self.intersect)):
+        r = min(self.intersect[i][0], r)
+
+      return r
+
+    else:
+
+      return 4e20
+
+  def maxDist(self):
+
+    if (len(self.intersect) != 0):
+
+      r = self.intersect[0][0]
+
+      for i in range (1, len(self.intersect)):
+        r = max(self.intersect[i][0], r)
+
+      return r
+
+    else:
+
+      return 4e20
+
+  def color(self):
+
+    if (len(self.intersect) != 0):
+
+      for i in range (0, len(self.intersect)):
+
+        if (self.intersect[i][0] == self.minDist()):
+
+          distFade = min(1/log(self.minDist(),self.fadeValue),1)
+
+          r = round(self.intersect[i][1][0] * distFade)
+          v = round(self.intersect[i][1][1] * distFade)
+          b = round(self.intersect[i][1][2] * distFade)
+
+          i = len(self.intersect)
+
+      return (r,v,b)
+
+    else:
+
+      return (25,25,25)
+
+  def interPoint(self):
+
+    o = self.pos[:]
+    v = self.vector
+    v.coef(self.minDist())
+
+    o[0] = o[0] + v.table[0]
+    o[1] = o[1] + v.table[1]
+    o[2] = o[2] + v.table[2]
+
+    return o
+
+
+class Camera:
+
+  def __init__(self, p, di, fov, screen, lights, fadeValue):
+
+    self.pos = p
+    self.dir = di
+    self.fov = fov
+    self.screen = screen
+    self.lights = lights
+    self.rays = Matrice.create(screen[0], screen[1])
+    self.fadeValue = fadeValue
+
+  def generateRays(self):
+
+    wid = self.screen[0]
+    hei = self.screen[1]
+
+    v = Vector()
+    vx = self.dir[0] - self.pos[0]
+    vy = self.dir[1] - self.pos[1]
+    vz = self.dir[2] - self.pos[2]
+    v.table = [vx, vy, vz]
+    v.normalize()
+
+    Hfov = self.fov * (hei/wid)
+
+    for a in range (0, wid):
+
+      alpha = ((self.fov/wid) * a) - self.fov/2
+
+      for b in range (0, hei):
+
+        beta = (Hfov/hei)*b - Hfov/2
+        self.rays.set(b, a, Ray(self.pos, alpha, beta, self.fadeValue))
+
+class Scene:
+
+  def __init__(self, cam, objs, ambient):
+
+    self.cam = cam
+    cam.generateRays()
+    self.objs = objs
+    self.ambient = ambient
+
+  def render(self):
+
+    for i in range(0, self.cam.screen[0] - 1):
+
+      if(i % (self.cam.screen[0]/10) == 0):
+        Tool.clear()
+        print("raycasting : " + str(i*100/self.cam.screen[0]) + "%\n")
+
+      for j in range(0, self.cam.screen[1] - 1):
+
+        for obj in range (0, len(self.objs)):
+
+          self.cam.rays.get(j,i).cast(self.objs[obj])
+
+    img = Image.new("RGB", (self.cam.screen[0], self.cam.screen[1]), (255,255,255))
+
+    for ypix in range(0, self.cam.screen[1]):
+
+      if(ypix % (self.cam.screen[1]/10) == 0):
+        Tool.clear()
+        print("generating image : " + str(ypix*100/self.cam.screen[1]) + "%\n")
+
+      for xpix in range(0, self.cam.screen[0]):
+
+        ray = self.cam.rays.get(ypix, xpix)
+        (r,g,b) = ray.color()
+
+        contact = ray.interPoint()
+        lightHit = 0;
+
+        for light in range (0, len(self.cam.lights)):
+
+          lightRay = Ray(contact, 0, 0, 1)
+          lightRay.vector = Vector.fromTo3D(contact, self.cam.lights[light].pos)
+          lightRay.vector.normalize()
+
+          if(max(self.ambient) < 1 and min(self.ambient) >= 0):
+
+            for obj in range (0, len(self.objs)):
+
+              lightRay.cast(self.objs[obj])
+
+            if not(len(lightRay.intersect) >= 1 and abs(lightRay.maxDist()) >= epsilon):
+              lightHit += 1
+
+        if(max(self.ambient) < 1 and min(self.ambient) >= 0):
+          if (lightHit < 1):
+            r = round(r*self.ambient[0])
+            g = round(g*self.ambient[1])
+            b = round(b*self.ambient[2])
+
+        img.putpixel((xpix , ypix), (r,g,b))
+    img.show()
+    return img
+
+class Plane:
+
+  def __init__(self, n, p, RGB):
+
+    self.n = Vector()
+    self.n.table = n
+    self.p = p
+    self.color = RGB
+
+  def solve(self, ray):
+
+    v = Vector()
+    v.table = [self.p[0]-ray.pos[0], self.p[1]-ray.pos[1], self.p[2]-ray.pos[2]]
+
+    den = Vector.scalar(ray.vector,self.n)
+
+    if (den != 0):
+      d = Vector.scalar(v,self.n)/den
+      if (d > 0):
+        return d
+      else:
+        return 0
+    else:
+      return 0
+
+class Sphere:
+
+  def __init__(self, c, r, RGB):
+
+    self.center = c
+    self.radius = r
+    self.color = RGB
+
+  def solve(self, ray):
+
+    c = Vector()
+    c.table = self.center
+
+    o = Vector()
+    o.table = ray.pos
+
+    delta = Vector.scalar(ray.vector, o-c)**2 - ( Tool.dist(ray.pos, self.center)**2 - self.radius ** 2 )
+
+    if (delta < 0):
+      return 0
+
+    if (delta == 0):
+
+      d = Vector.scalar(ray.vector, o-c)
+
+      if (d >= 0):
+        return d
+      else:
+        return 0
+
+    if (delta > 0):
+
+      d1 = Vector.scalar(ray.vector, o-c) - sqrt(delta)
+      d2 = Vector.scalar(ray.vector, o-c) + sqrt(delta)
+
+      if (d1 >= 0 and d2 >= 0):
+        return [d1,d2]
+
+      if (d1 >= 0 and d2 < 0):
+        return d1
+
+      if (d1 < 0 and d2 >= 0):
+        return d2
+
+      if (d1 < 0 and d2 < 0):
+        return 0
+
+class Union:
+
+  def __init__(self, objs):
+
+    self.objs = objs
+    self.color = self.color()
+
+  def color(self):
+
+    RGB = [0,0,0]
+
+    for i in range (0, len(self.objs)):
+      RGB[0] += self.objs[i].color[0]
+      RGB[1] += self.objs[i].color[1]
+      RGB[2] += self.objs[i].color[2]
+
+    RGB[0] = RGB[0] / len(self.objs)
+    RGB[1] = RGB[1] / len(self.objs)
+    RGB[2] = RGB[2] / len(self.objs)
+
+    return RGB
+
+  def solve(self, ray):
+
+    d = []
+
+    for i in range (0, len(self.objs)):
+
+      r = self.objs[i].solve(ray)
+
+      if(type(r) != list):
+        d.append(r)
+      else:
+
+        for a in range (0, len(r)):
+          d.append(r[a])
+
+    return d
+
+class Light:
+
+#base for lightsource could implement lightcolor, lisght intensity, or emiting angles ...
+
+  def __init__(self, pos):
+
+    self.pos = pos
+					</code></pre>
+
+				</div>
+
+			</div>
+
+			<div class="card">
+
+				<div class="cardTitle"> Corewar </div>
+
+				<div class="cardTech">
+					<span class="logo_big" id="java"></span>
+				</div>
+
+				<div class="cardLinks">
+					<div class="git" onclick="window.location.href='https://github.com/AntonyMadaleno/corewar'">
+						<span class="logo_big" id="github"></span>
+					</div>
+				</div>
+
+				<div class="cardDescription">
+					Un jeu en réseau reprenant le principe de corewar et utilisant le multithreading pour simuler un environnement virtuel M.A.R.S
+
+				</br></br>	
+					CODE &lt<span class="logo" id="java" style="padding: 0"></span>&gt
+					<pre><code class="language-java">
+import java.io.*;
+import java.util.*;
+
+public class MARS
+{
+	//MARS
+
+	private Memory memory;
+	private Process[] queue; //process queue
+	private String[] pids;
+	private Session owner; //owning session
+	private int p_count;
+	private int cycle;
+	private int cycle_threshold;
+
+	public MARS(int mem_size, int max_cycle, int max_process)
+	{
+		this.memory = new Memory(mem_size);
+		this.cycle = 0;
+		this.cycle_threshold = max_cycle;
+		this.queue = new Process[max_process];
+		this.pids = new String[max_process];
+		this.p_count = 0;
+	}
+
+	public MARS()
+	{
+		this(8000, 300000, 8);
+	}
+
+	public void setOwner(Session owner)
+	{
+		this.owner = owner;
+	}
+
+	public Session getOwner()
+	{
+		return this.owner;
+	}
+
+	public void init()
+	{
+
+		int[] def_array = {0,0,0,0,0};
+
+		for (int i = 0; i < this.memory.getSize(); i++)
+		{
+			Instruction def_instruction = new Instruction(def_array, i,this.memory.getSize());
+
+			this.memory.setInstruction(i, def_instruction);
+		}		
+
+	}
+
+	public int[] loadLocal(String[] redfiles)
+	{
+		//redfiles must be loaded in session/redcode
+
+		int[] ret = new int[redfiles.length];
+
+		for (int i = 0; i < redfiles.length; i++)
+		{
+
+			if(redfiles[i] != null)
+			{
+
+				int[][] instrcutions = RedCode.compile("../session/redcode", redfiles[i]);
+
+				boolean free = false;
+				int a0 = 0;
+
+				while (!free)
+				{
+
+					a0 = (int)(Math.random() * this.memory.getSize());
+					free = this.memory.isFree(a0, a0 + instrcutions.length);
+
+				}
+
+				for (int j = 0; j < instrcutions.length; j++)
+				{
+					this.memory.setInstruction(j+a0, new Instruction(instrcutions[j], a0+j, this.memory.getSize() ) );
+				}
+
+				ret[i] = a0;
+				this.pids[i] = redfiles[i];
+
+			}
+
+		}
+
+		this.initProcesses(ret);
+
+		return ret;
+
+	}
+
+	public int[] load(String dir, String[] redfiles)
+	{
+
+		int[] ret = new int[redfiles.length];
+
+		for (int i = 0; i < redfiles.length; i++)
+		{
+
+			if(redfiles[i] != null)
+			{
+
+				int[][] instrcutions = RedCode.compile(dir, redfiles[i]);
+
+				boolean free = false;
+				int a0 = 0;
+
+				while (!free)
+				{
+
+					a0 = (int)(Math.random() * this.memory.getSize());
+					free = this.memory.isFree(a0, a0 + instrcutions.length);
+
+				}
+
+				for (int j = 0; j < instrcutions.length; j++)
+				{
+					this.memory.setInstruction(j+a0, new Instruction(instrcutions[j], a0+j, this.memory.getSize() ) );
+				}
+
+				ret[i] = a0;
+				this.pids[i] = redfiles[i];
+
+			}
+
+		}
+
+		this.initProcesses(ret);
+
+		return ret;
+
+	}
+
+	private void initProcesses(int[] p)
+	{
+
+		for (int i = 0; i < p.length; i++)
+		{
+
+			while (this.getMemory().getInstruction(p[i]).getLine()[0] == 0)
+			{
+				p[i]++;
+			}
+
+			this.createProcess(this.pids[i], p[i]);
+		}
+
+	}
+
+	public void run()
+	{
+
+		while (this.cycle < this.cycle_threshold)
+		{
+			this.step();
+			this.cycle++;
+		}
+
+		boolean noDead = true;
+
+		for (int i = 0; i < this.queue.length; i++)
+		{
+			if(!this.queue[i].active())
+			{
+				noDead = false;
+			}
+		}
+
+		if(noDead)
+		{
+			this.owner.setStats("No process died !");
+		}
+
+	}
+
+	private void step()
+	{
+
+		for (int i = 0; i < this.p_count; i++)
+		{
+			if (this.queue[i].active() && this.queue[i].execute() == false)
+			{
+				
+				if(this.owner == null)
+				{
+					System.out.println("MAIN >> Process " + this.pids[i] + " died at cycle " + this.cycle);
+				}
+				else
+				{
+					//System.out.println(this.owner.getSessionId() + " >> Process " + this.pids[i] + " died at cycle " + this.cycle);
+					this.owner.setStats(this.pids[i] + " : " + this.cycle);
+				}
+
+			}
+		}
+
+	}
+
+	public Memory getMemory()
+	{
+		return this.memory;
+	}
+
+	public int getProcessCount()
+	{
+		return this.p_count;
+	}
+
+	private int createProcess(String name, int pointer)
+	{
+
+		if(p_count < this.queue.length && name != null)
+		{
+			this.queue[p_count] = new Process(this, pointer%this.memory.getSize(), name);
+			this.p_count++;
+			return pointer%this.memory.getSize();
+		}
+
+		return -1;
+	}
+
+}
+					</code></pre>
+
+					</br></br>
+					<pre><code class="language-java">
+import java.io.*;
+import java.util.*;
+
+public class Memory 
+{
+	//Using Instruction Class
+
+	private int size;
+	private Instruction[] memory_array; 
+
+	public Memory(int size)
+	{
+		this.size = size;
+		this.memory_array = new Instruction[size];
+	}
+
+	public Memory()
+	{
+		this(8000);
+	}
+
+	public boolean isFree(int from, int to)
+	{
+		from = from % this.size;
+		to = to % this.size;
+		int ini = Math.min(from, to);
+
+		boolean ret = true;
+
+		int[] def = {0,0,0,0,0};
+
+		for (int i = 0; i < Math.abs(from - to); i++)
+		{
+
+			int[] line = this.memory_array[(i+ini)%this.size].getLine();
+
+			if (!Arrays.equals(line, def))
+			{
+				ret = false;
+			}
+		}
+
+		return ret;	
+
+	}
+
+	public int getSize()
+	{
+		return this.size;
+	}
+
+	public Instruction getInstruction(int addr) 
+	{
+
+		if(addr < 0)
+		{
+			addr = (this.size)-(Math.abs(addr)%(this.size));
+		}
+
+		return this.memory_array[addr%this.size]; 
+	}
+
+	public void setInstruction(int addr, Instruction ins)
+	{
+
+		if(addr < 0)
+		{
+			addr = (this.size)-(Math.abs(addr)%(this.size));
+		}
+
+		this.memory_array[addr%this.size] = ins;
+	}
+
+	public void copy(int addr1, int addr2)
+	{
+		if(addr1 < 0)
+		{
+			addr1 = (this.size)-(Math.abs(addr1)%(this.size));
+		}
+		if(addr2 < 0)
+		{
+			addr2 = (this.size)-(Math.abs(addr2)%(this.size));
+		}
+		if(addr1 >= this.size)
+		{
+			addr1 = addr1 % (this.size);
+		}
+		if(addr2 >= this.size)
+		{
+			addr2 = addr2 % (this.size);
+		}
+
+		this.setInstruction(addr2, memory_array[addr1].clone(addr2));
+	}
+
+	public void save(String dir, String filename)
+	{
+
+		new File(dir).mkdirs();
+		File save = new File(dir + "/" + filename + ".memory");
+
+		try 
+		{
+			FileWriter fw = new FileWriter(save);
+
+			for (int i = 0; i < memory_array.length; i++)
+			{
+				fw.write(memory_array[i].toString() + "\n");
+			}
+
+			fw.close();
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+}
+					</code></pre>
+
+					</br></br>
+					<pre><code class="language-java">
+import java.io.*;
+import java.util.*;
+
+public class Process
+{
+	//Process
+
+	private String pid;
+	private int pointer;
+	private MARS owner;
+	private boolean alive;
+	private int deathCycle;
+
+	public Process(MARS owner, int pointer, String pid)
+	{
+
+		this.owner = owner;
+		this.pointer = pointer;
+		this.pid = pid;
+		this.alive = true;
+		this.deathCycle = 0;
+
+	}
+
+	public boolean active()
+	{
+		return this.alive;
+	}
+
+	public String getPID()
+	{
+		return this.pid;
+	}
+
+	public boolean execute()
+	{
+
+		if (this.alive == false)
+		{
+			return false;
+		}
+
+		Instruction cmd = this.owner.getMemory().getInstruction(this.pointer);
+
+		int opcode = cmd.getLine()[0];
+		boolean ret = false;
+
+
+		if(opcode == 0)
+		{
+			ret = this.dat(cmd);
+		}
+		if(opcode == 1)
+		{
+			ret = this.mov(cmd);
+		}
+		if(opcode == 2)
+		{
+			ret = this.add(cmd);
+		}
+		if(opcode == 3)
+		{
+			ret = this.sub(cmd);
+		}
+		if(opcode == 4)
+		{
+			ret = this.jmp(cmd);
+		}
+		if(opcode == 5)
+		{
+			ret = this.jmz(cmd);
+		}
+		if(opcode == 6)
+		{
+			ret = this.jmg(cmd);
+		}
+		if(opcode == 7)
+		{
+			ret = this.djz(cmd);
+		}
+		if(opcode == 8)
+		{
+			ret = this.cmp(cmd);
+		}
+
+		if (ret == false)
+		{
+			this.alive = false;
+		}
+
+		this.deathCycle++;
+
+		return ret;
+
+	}
+
+	/**
+		
+	DAT = 0	-data
+	MOV = 1	-move from A to B
+	ADD = 2	-add A to B, store result in B
+	SUB = 3	-subtract A from B, store result in B
+	JMP = 4	-transfer execution to A
+	JMZ = 5	-transfer execution to A if B is zero
+	JMG = 6	-transfer control to address A if contents of B are greater than zero.
+	DJZ = 7	-decrement B, if B is non-zero, transfer execution to A
+	CMP = 8	-Compare A and B, if they are not equal then we skip the next instruction
+
+	**/
+
+	private boolean dat(Instruction cmd)
+	{
+		//-DAT
+		return false;
+
+	}
+
+	private boolean mov(Instruction cmd)
+	{
+		//-MOV
+
+		int arg_A = cmd.getLine()[2];
+		int mode_A = cmd.getLine()[1];
+
+		int arg_B = cmd.getLine()[4];
+		int mode_B = cmd.getLine()[3];
+
+
+		//------------
+		if(mode_A == 0)
+		{
+			arg_A = arg_A + this.pointer;
+		}
+
+		if(mode_A == 2)
+		{
+
+			if (this.owner.getMemory().getInstruction(this.pointer + arg_A).getLine()[0] == 0)
+			{
+				arg_A = this.owner.getMemory().getInstruction(this.pointer + arg_A).getLine()[2] + this.pointer;
+			}
+			else
+			{
+				return false;
+			}
+			
+		}
+
+		//------------
+		if(mode_B == 0)
+		{
+			arg_B = arg_B + this.pointer;
+		}
+
+		if(mode_B == 2)
+		{
+
+			if (this.owner.getMemory().getInstruction(this.pointer + arg_B).getLine()[0] == 0)
+			{
+				arg_B = this.owner.getMemory().getInstruction(this.pointer + arg_B).getLine()[2] + this.pointer;
+			}
+			else
+			{
+				return false;
+			}
+			
+		}
+
+
+		if(mode_A == 1)
+		{
+			int[] arr = {0,0,arg_A,0,0};
+			Instruction instr = new Instruction(arr, arg_B,this.owner.getMemory().getSize());
+			this.owner.getMemory().setInstruction(arg_B, instr);
+			this.pointer++;
+			return true;
+		}
+		if(mode_A == 0 || mode_A == 2)
+		{
+			this.owner.getMemory().copy(arg_A, arg_B);
+			this.pointer++;
+			return true;
+		}
+
+		return false;
+
+	}
+
+	private boolean add(Instruction cmd)
+	{	
+		//ADD
+
+		int arg_A = cmd.getLine()[2];
+		int mode_A = cmd.getLine()[1];
+
+		int arg_B = cmd.getLine()[4];
+		int mode_B = cmd.getLine()[3];
+
+
+		//------------
+		if(mode_A == 0)
+		{
+			arg_A = arg_A + this.pointer;
+		}
+
+		if(mode_A == 2)
+		{
+
+			if (this.owner.getMemory().getInstruction(this.pointer + arg_A).getLine()[0] == 0)
+			{
+				arg_A = this.owner.getMemory().getInstruction(this.pointer + arg_A).getLine()[2];
+			}
+			else
+			{
+				return false;
+			}
+			
+		}
+
+		//------------
+		if(mode_B == 0)
+		{
+			arg_B = arg_B + this.pointer;
+		}
+
+		if(mode_B == 2)
+		{
+
+			if (this.owner.getMemory().getInstruction(this.pointer + arg_B).getLine()[0] == 0)
+			{
+				arg_B = this.owner.getMemory().getInstruction(this.pointer + arg_A).getLine()[2];
+			}
+			else
+			{
+				return false;
+			}
+			
+		}
+
+
+		if (this.owner.getMemory().getInstruction(arg_B).getLine()[0] == 0)
+		{
+			int[] arr = {0,0,arg_A + this.owner.getMemory().getInstruction(arg_B).getLine()[2],0,0};
+			Instruction instr = new Instruction(arr, arg_B, this.owner.getMemory().getSize());
+			this.owner.getMemory().setInstruction(arg_B, instr);
+			this.pointer++;
+			return true;
+		}
+
+		return false;
+
+	}
+
+	private boolean sub(Instruction cmd)
+	{	
+		//SUB
+
+		int arg_A = cmd.getLine()[2];
+		int mode_A = cmd.getLine()[1];
+
+		int arg_B = cmd.getLine()[4];
+		int mode_B = cmd.getLine()[3];
+
+
+		//------------
+		if(mode_A == 0)
+		{
+			arg_A = arg_A + this.pointer;
+		}
+
+		if(mode_A == 2)
+		{
+
+			if (this.owner.getMemory().getInstruction(this.pointer + arg_A).getLine()[0] == 0)
+			{
+				arg_A = this.owner.getMemory().getInstruction(this.pointer + arg_A).getLine()[2];
+			}
+			else
+			{
+				return false;
+			}
+			
+		}
+
+		//------------
+		if(mode_B == 0)
+		{
+			arg_B = arg_B + this.pointer;
+		}
+
+		if(mode_B == 2)
+		{
+
+			if (this.owner.getMemory().getInstruction(this.pointer + arg_B).getLine()[0] == 0)
+			{
+				arg_B = this.owner.getMemory().getInstruction(this.pointer + arg_A).getLine()[2];
+			}
+			else
+			{
+				return false;
+			}
+			
+		}
+
+		arg_A = -arg_A;
+
+
+		if (this.owner.getMemory().getInstruction(arg_B).getLine()[0] == 0)
+		{
+			int[] arr = {0,0,arg_A + this.owner.getMemory().getInstruction(arg_B).getLine()[2],0,0};
+			Instruction instr = new Instruction(arr, arg_B, this.owner.getMemory().getSize());
+			this.owner.getMemory().setInstruction(arg_B, instr);
+			this.pointer++;
+			return true;
+		}
+
+		return false;
+
+	}
+
+
+	private boolean jmp(Instruction cmd)
+	{	
+		//JMP
+
+		int arg_A = cmd.getLine()[2];
+		int mode_A = cmd.getLine()[1];
+
+		//------------
+		if(mode_A == 0)
+		{
+			arg_A = arg_A + this.pointer;
+		}
+
+		if(mode_A == 2)
+		{
+
+			if (this.owner.getMemory().getInstruction(this.pointer + arg_A).getLine()[0] == 0)
+			{
+				arg_A = this.owner.getMemory().getInstruction(this.pointer + arg_A).getLine()[2];
+			}
+			else
+			{
+				return false;
+			}
+			
+		}
+
+		this.pointer = arg_A;
+
+		return true;
+
+	}
+
+	private boolean jmz(Instruction cmd)
+	{
+		//JMZ
+
+		int arg_B = cmd.getLine()[4];
+		int mode_B = cmd.getLine()[3];
+
+		//------------
+		if(mode_B == 0)
+		{
+			arg_B = arg_B + this.pointer;
+		}
+
+		if(mode_B == 2)
+		{
+
+			if (this.owner.getMemory().getInstruction(this.pointer + arg_B).getLine()[0] == 0)
+			{
+				arg_B = this.owner.getMemory().getInstruction(this.pointer + arg_B).getLine()[2];
+			}
+			else
+			{
+				return false;
+			}
+			
+		}
+
+		if(arg_B == 0)
+		{
+			return this.jmp(cmd);
+		}
+		
+		this.pointer++;
+		return true;
+
+
+	}
+
+	private boolean jmg(Instruction cmd)
+	{
+		//JMG
+
+		int arg_B = cmd.getLine()[4];
+		int mode_B = cmd.getLine()[3];
+
+		//------------
+		if(mode_B == 0)
+		{
+			arg_B = arg_B + this.pointer;
+		}
+
+		if(mode_B == 2)
+		{
+
+			if (this.owner.getMemory().getInstruction(this.pointer + arg_B).getLine()[0] == 0)
+			{
+				arg_B = this.owner.getMemory().getInstruction(this.pointer + arg_B).getLine()[2];
+			}
+			else
+			{
+				return false;
+			}
+			
+		}
+
+		if(arg_B > 0)
+		{
+			return this.jmp(cmd);
+		}
+		
+		this.pointer++;
+		return true;
+
+
+	}
+
+
+	private boolean djz(Instruction cmd)
+	{
+		//DJZ
+
+		int arg_A = cmd.getLine()[2];
+		int mode_A = cmd.getLine()[1];
+
+		int arg_B = cmd.getLine()[4];
+		int mode_B = cmd.getLine()[3];
+
+		//------------
+		if(mode_A == 0)
+		{
+			arg_A = arg_A + this.pointer;
+		}
+
+		if(mode_A == 2)
+		{
+
+			if (this.owner.getMemory().getInstruction(this.pointer + arg_A).getLine()[0] == 0)
+			{
+				arg_A = this.owner.getMemory().getInstruction(this.pointer + arg_A).getLine()[2];
+			}
+			else
+			{
+				return false;
+			}
+			
+		}
+
+		//------------
+		if(mode_B == 0)
+		{
+			arg_B = arg_B + this.pointer;
+		}
+
+		if(mode_B == 2)
+		{
+
+			if (this.owner.getMemory().getInstruction(this.pointer + arg_B).getLine()[0] == 0)
+			{
+				arg_B = this.owner.getMemory().getInstruction(this.pointer + arg_B).getLine()[2];
+			}
+			else
+			{
+				return false;
+			}
+			
+		}
+
+		if (this.owner.getMemory().getInstruction(arg_B).getLine()[0] == 0)
+		{
+			this.owner.getMemory().getInstruction(arg_B).getLine()[2]--;
+		}
+		else
+		{
+			return false;
+		}
+
+		if(this.owner.getMemory().getInstruction(arg_B).getLine()[2] == 0)
+		{
+			this.pointer = arg_A;
+			return true;
+		}
+
+		this.pointer++;
+		return true;
+
+	}
+
+	private boolean cmp(Instruction cmd)
+	{
+
+		int arg_A = cmd.getLine()[2];
+		int mode_A = cmd.getLine()[1];
+
+		int arg_B = cmd.getLine()[4];
+		int mode_B = cmd.getLine()[3];
+		
+		//------------
+
+		if(mode_A == 0)
+		{
+
+			if (this.owner.getMemory().getInstruction(this.pointer + arg_A).getLine()[0] == 0)
+			{
+				arg_A = this.owner.getMemory().getInstruction(this.pointer + arg_A).getLine()[2];
+			}
+			else
+			{
+				return false;
+			}
+			
+		}
+		if(mode_A == 2)
+		{
+
+			if (this.owner.getMemory().getInstruction(this.pointer + arg_A).getLine()[0] == 0)
+			{
+				arg_A = this.owner.getMemory().getInstruction(this.pointer + arg_A).getLine()[2];
+			}
+			else
+			{
+				return false;
+			}
+
+			if (this.owner.getMemory().getInstruction(this.pointer + arg_A).getLine()[0] == 0)
+			{
+				arg_A = this.owner.getMemory().getInstruction(this.pointer + arg_A).getLine()[2];
+			}
+			else
+			{
+				return false;
+			}
+			
+		}
+
+		//------------
+
+		if(mode_B == 0)
+		{
+
+			if (this.owner.getMemory().getInstruction(this.pointer + arg_B).getLine()[0] == 0)
+			{
+				arg_B = this.owner.getMemory().getInstruction(this.pointer + arg_B).getLine()[2];
+			}
+			else
+			{
+				return false;
+			}
+			
+		}
+
+		if(mode_B == 2)
+		{
+
+			if (this.owner.getMemory().getInstruction(this.pointer + arg_B).getLine()[0] == 0)
+			{
+				arg_B = this.owner.getMemory().getInstruction(this.pointer + arg_B).getLine()[2];
+			}
+			else
+			{
+				return false;
+			}
+
+			if (this.owner.getMemory().getInstruction(this.pointer + arg_B).getLine()[0] == 0)
+			{
+				arg_B = this.owner.getMemory().getInstruction(this.pointer + arg_B).getLine()[2];
+			}
+			else
+			{
+				return false;
+			}
+			
+		}
+
+		if (arg_A != arg_B)
+		{
+			this.pointer++;
+		}
+
+		this.pointer++;
+		return true;
+
+	}
+
+
+}
+					</code></pre>
+
+					</br></br>
+					<pre><code class="language-java">
+import java.io.*;
+import java.util.*;
+
+public class RedCode
+{
+
+	//Variables
+	private String text;
+	private int[][] compiled;
+
+	//RedCode ruleset
+	private String[] opcodeRef = {"DAT", "MOV", "ADD", "SUB", "JMP", "JMZ", "JMG", "DJZ", "CMP"};
+
+	/**
+		
+	DAT = 0	-data
+	MOV = 1	-move from A to B
+	ADD = 2	-add A to B, store result in B
+	SUB = 3	-subtract A from B, store result in B
+	JMP = 4	-transfer execution to A
+	JMZ = 5	-transfer execution to A if B is zero
+	JMG = 6	-transfer control to address A if contents of B are greater than zero.
+	DJZ = 7	-decrement B, if B is non-zero, transfer execution to A
+	CMP = 8	-Compare A and B, if they are not equal then we skip the next instruction
+
+	**/
+
+	public static int getOpcodeID(String opcode)
+	{
+
+		String[] opcodeRef = {"DAT", "MOV", "ADD", "SUB", "JMP", "JMZ", "JMG", "DJZ", "CMP"};
+
+		for (int i = 0; i < opcodeRef.length; i++)
+		{
+			if(opcodeRef[i].equals(opcode))
+			{
+				return i;
+			}
+		}
+
+		return -1;
+
+	}
+
+	public static int[][] compile(String dir, String filename)
+	{
+
+		int[][] ret = new int[1024][5];
+		int size = 0;
+
+		File file = new File(dir + "/" + filename + ".RED");
+		Scanner scanner;
+
+		try {
+
+			scanner = new Scanner(file);
+
+			for (int i = 0; i < 1024; i++) 
+			{
+				try 
+				{
+
+					String line = scanner.nextLine();
+					String[] parts = line.split(" ");
+
+					if (getOpcodeID(parts[0]) != -1)
+					{
+						ret[i][0] = getOpcodeID(parts[0]); //opcode id
+					}
+					else
+					{
+						System.out.printf("Error at line (%d), \"%s\" opcode is invalid !\n", i, parts[0]);
+						return null;
+					}
+
+
+					//ARG-A
+					if (parts.length > 1)
+					{
+						if (parts[1].charAt(0) == '#' || ret[i][0] == 0)
+						{
+							ret[i][1] = 1;
+						}
+						else
+						{
+							if (parts[1].charAt(0) == '@')
+							{
+								ret[i][1] = 2;
+							}
+							else 
+							{
+								if(parts[1].charAt(0) == '-' || parts[1].charAt(0) == '0' || parts[1].charAt(0) == '1' || parts[1].charAt(0) == '2' || parts[1].charAt(0) == '3' || parts[1].charAt(0) == '4' || parts[1].charAt(0) == '5' || parts[1].charAt(0) == '6' || parts[1].charAt(0) == '7' || parts[1].charAt(0) == '8' || parts[1].charAt(0) == '9')
+								{
+									ret[i][1] = 0;
+								}
+								else
+								{
+									ret[i][1] = -1;
+									System.out.printf("Error at line (%d), \"%s\" mode is invalid !\n", i, parts[2]);
+									return null;
+								}
+							}
+						}
+
+						if (ret[i][1] == 0 || ret[i][0] == 0)
+						{
+							ret[i][2] = Integer.parseInt(parts[1]);
+						}
+						else
+						{
+							ret[i][2] = Integer.parseInt(parts[1].substring(1, parts[1].length() ) );
+						}
+					}
+
+					//ARG-B
+					if (parts.length == 3)
+					{
+						if (parts[2].charAt(0) == '#')
+						{
+							ret[i][3] = 1;
+						}
+						else
+						{
+							if (parts[2].charAt(0) == '@')
+							{
+								ret[i][3] = 2;
+							}
+							else 
+							{
+								if(parts[2].charAt(0) == '-' || parts[2].charAt(0) == '0' || parts[2].charAt(0) == '1' || parts[2].charAt(0) == '2' || parts[2].charAt(0) == '3' || parts[2].charAt(0) == '4' || parts[2].charAt(0) == '5' || parts[2].charAt(0) == '6' || parts[2].charAt(0) == '7' || parts[2].charAt(0) == '8' || parts[2].charAt(0) == '9')
+								{
+									ret[i][3] = 0;
+								}
+								else
+								{
+									ret[i][3] = -1;
+									System.out.printf("Error at line (%d), \"%s\" mode is invalid !\n", i, parts[2]);
+									return null;
+								}
+							}
+						}
+
+						if (ret[i][3] == 0)
+						{
+							ret[i][4] = Integer.parseInt(parts[2]);
+						}
+						else
+						{
+							ret[i][4] = Integer.parseInt(parts[2].substring(1, parts[2].length() ) );
+						}
+					}
+
+				}
+				catch (NoSuchElementException e) 
+				{
+					size = i;
+					i = 1024;
+				}//get out of the loop
+			}
+
+
+
+			scanner.close();
+
+		}
+		catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+
+
+		return Arrays.copyOfRange(ret, 0, size);
+
+	}
+
+	public static boolean verify(String dir, String filename)
+	{
+
+		int[][] compiled = RedCode.compile(dir, filename);
+		boolean ret = true;
+
+		try 
+		{
+			for (int i = 0; i < compiled.length; i++)
+			{
+				if(compiled[i][0] == -1) {ret = false;} //opcode
+				if(compiled[i][1] == -1) {ret = false;} //mode-a
+				if(compiled[i][3] == -1) {ret = false;} //mode-b
+			}
+
+			return ret;
+		}
+		catch (NullPointerException e)
+		{
+			return false;
+		}
+
+		
+
+	}
+
+	public static String reverse(int[] instr)
+	{
+
+		String[] opcodeRef = {"DAT", "MOV", "ADD", "SUB", "JMP", "JMZ", "JMG", "DJZ", "CMP"};
+
+		String opcode;
+
+		if (instr[0] != -1)
+		{
+			opcode = opcodeRef[instr[0]];
+		}
+		else
+		{
+			opcode = "/!\\";
+		}
+		
+		String argA = "";
+		String argB = "";
+
+
+		//argA
+
+		if (instr[1] == 1 && instr[0] != 0)
+		{
+			argA = argA + "#";
+		}
+		if (instr[1] == 2)
+		{
+			argA = argA + "@";
+		}
+
+		//argB
+
+		if (instr[3] == 1)
+		{
+			argB = argB + "#";
+		}
+		if (instr[3] == 2)
+		{
+			argB = argB + "@";
+		}
+
+		argA = argA + String.valueOf(instr[2]);
+		argB = argB + String.valueOf(instr[4]);
+
+		return opcode + "\t" + argA + "\t" + argB; 
+
+	}
+
+}
+					</code></pre>
+
+					</br></br>
+					<pre><code class="language-java">
+import java.net.*;
+import java.io.*;
+import java.util.*;
+
+public class Scoreboard
+{
+
+	private File file;
+	private Sever owner;
+	private String ownerName;
+	private StringArray players;
+	private StringArray sessions;
+
+	public Scoreboard(Server owner, String dir)
+	{
+		this.file = new File(dir + "/scoreboard.scb");
+		this.ownerName = dir;
+		this.owner = owner;
+		this.players = new StringArray();
+		this.sessions = new StringArray();
+	}
+
+	public void addPlayer(String name)
+	{
+		this.players.push(name);
+	}
+
+	public void addSession(String name)
+	{
+		this.sessions.push(name);
+	}
+
+	public void run()
+	{
+
+		for (int i = 0; i < this.sessions.getStringArray().length; i++)
+		{
+			//do each sessions stats
+			try {
+				File stat = new File(dir + "/" + this.sessions.getString(i) + "/" + this.sessions.getString() + ".stat");
+				Scanner sc = new Scanner(stat);
+
+				String[] info = sc.nextLine().split(" : ");
+
+				int np = Integer.parseInt(info[0]); 
+
+				String[][] result = new String[np][2];
+
+				int c = 0;
+
+				while (sc.hasNextLine()) {
+
+        			String[] data = sc.nextLine().split(" : ");
+
+        			if(data.length == 3) 
+        			{
+
+	        			result[np - c][0] = data[1].split("_")[0];
+	        			result[np - c][1] = data[2];
+
+	        			c++;
+
+	        		}
+
+      			}
+
+			}
+			catch(Exception e)
+			{
+				e.printStacktrace();
+			}
+
+		}
+
+	}
+
+}
+					</code></pre>
+
+					</br></br>
+					<pre><code class="language-java">
+import java.net.*;
+import java.io.*;
+import java.util.*;
+
+public class Server extends Thread 
+{
+
+	final static int port = 9000;
+  	private Socket socket;
+  	private String name;
+  	private String filename;
+    private String stats;
+
+  	public static void main(String[] args) throws Exception
+  	{
+
+        Scanner keybord_input;
+
+        //hostname
+        System.out.print("\nEntrer le nom de votre serveur : ");
+        keybord_input = new Scanner(System.in);
+        String hostname = keybord_input.nextLine();
+
+        //max player
+        System.out.print("\nEntrez le nombre de joueurs max : ");
+        keybord_input = new Scanner(System.in);
+        String max = keybord_input.nextLine();
+
+  		Session[] sessions = new Session[10];
+  		int cursor = 0;
+  		int maxP = Integer.parseInt(max);
+  		String[] files = new String[maxP];
+        Server[] servs = new Server[maxP];
+
+  		for(int i = 0; i < 10; i++)
+  		{
+  			sessions[i] = new Session(hostname + "-" + i, maxP, hostname);
+  		}
+
+    	try 
+    	{
+
+    		boolean loop = true;
+      		ServerSocket socketServeur = new ServerSocket(port);
+      		System.out.println("Lancement du serveur sur le port : " + port);
+      		while (loop) 
+      		{
+        		Socket socketClient = socketServeur.accept();
+        		Server t = new Server(socketClient, hostname);
+        		t.start();
+                servs[cursor] = t;
+
+        		while(true)
+        		{
+        			if (t.getFileName() != null)
+        			{
+        				System.out.println(t.getFileName());
+        				files[cursor] = t.getFileName();
+        				break;
+        			}
+        		}
+
+        		cursor++;
+
+        		if (cursor == maxP)
+        		{
+        			loop = false;
+        		}
+      		}
+
+    	} 
+    	catch (Exception e) 
+    	{
+      		e.printStackTrace();
+    	}
+
+    	for(int i = 0; i < 10; i++)
+  		{
+  			sessions[i].submitFiles(files, files);
+  			sessions[i].start();
+  		}
+
+        String stat = "";
+
+        int count = 0;
+
+        while (count < 10)
+        {   
+            System.out.print(""); //si je le retire ça marche plus mais jsp pourquoi (j'ai cassé 2 souris à cause de ça)
+            if(sessions[count].finished())
+            {
+                stat += sessions[count].getStats() + "\n";
+                count++;
+            }
+
+        }
+
+        System.out.println(stat);
+
+        for (int i = 0; i < servs.length; i++)
+        {
+            servs[i].setStats(stat);
+        }
+
+  	}
+
+  	public Server(Socket socket, String name) 
+  	{
+    	this.socket = socket;
+    	this.name = name;
+  	}
+
+  	public void run() 
+  	{
+    	try 
+    	{
+      		String message = "connexion sur le port : " + port;
+
+      		System.out.println("Connexion avec le client : " + socket.getInetAddress());
+
+      		BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+      		PrintStream out = new PrintStream(socket.getOutputStream());
+      		out.println("Serv : " + message);
+      		filename = in.readLine();
+
+      		String redcode = "";
+      		boolean loop = true;
+
+            String nl;
+
+            String dir = "../Save/server/" + this.name + "/redcode";
+
+      		while (loop)
+      		{
+      			try
+      			{
+      				nl = in.readLine();
+      				if (nl.equals("exit"))
+      				{
+
+                        if (!RedCode.verify(dir, filename))
+                        {
+                            redcode = "";
+                            loop = false;
+                        }
+                        else
+                        {
+                            loop = false;
+                        }
+
+      				}
+      				else {
+      					redcode += nl + "\n";
+      				}
+      			}
+      			catch (Exception e)
+      			{
+      				break;
+      			}
+      		}
+
+      		this.save(filename, redcode);
+
+            while (true)
+            {
+
+                try
+                {
+
+                    System.out.print("");
+
+                    if(this.stats != null)
+                    {
+                        out.println("STATS " + this.stats);
+                        break;
+                    }
+                }
+                catch (Exception e)
+                {
+                    //do nothing
+                }
+
+            }
+
+            out.println("END");
+
+      		socket.close();
+    	} 
+    	catch (Exception e) 
+    	{
+      		e.printStackTrace();
+    	}
+  	}
+
+  	private void save(String filename, String rc)
+	{
+
+		String dir = "../Save/server/" + this.name + "/redcode";
+
+		new File(dir).mkdirs();
+		File save = new File(dir + "/" + filename + ".RED");
+
+		try 
+		{
+			FileWriter fw = new FileWriter(save);
+
+			fw.write(rc);
+
+			fw.close();
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+    public void setStats(String s)
+    {
+        this.stats = s;
+    }
+
+	public String getFileName()
+	{
+		return this.filename;
+	}
+
+}
+					</code></pre>
+
+					</br></br>
+					<pre><code class="language-java">
+import java.io.*;
+import java.util.*;
+
+public class Session extends Thread 
+{
+
+	private Thread t;
+	private String session_id;
+	private String saveDir;
+	private MARS mars;
+	private String[] files;
+	private String[] players;
+	private int file_count;
+	private String stats;
+	private boolean finished = false;
+
+
+	public Session(String id, int max_player, String saveDir)
+	{
+		this.session_id = id;
+		this.saveDir = saveDir;
+		this.files = new String[max_player];
+		this.players = new String[max_player];
+		this.file_count = 0;
+	}
+
+	public String[] getPlayers()
+	{
+		return this.players;
+	}
+
+	public void submit(String player, String filename)
+	{
+		if (this.file_count < this.files.length)
+		{
+			this.files[file_count] = filename;
+			this.players[file_count] = player;
+			this.file_count++;
+		}
+		else
+		{
+			System.out.println("Session " + this.session_id + " : nombre de soumission de fichier depasser !");
+		}
+
+	}
+
+	public void submitFiles(String[] players, String[] files)
+	{
+		for (int i = 0; i < files.length; i++)
+		{
+			this.submit(players[i], files[i]);
+		}
+	}
+
+	public void setMars(int mem_size, int max_cycle)
+	{
+		this.mars = new MARS(mem_size, max_cycle, this.files.length);
+		this.mars.init();
+	}
+
+	public String getSessionId()
+	{
+		return this.session_id;
+	}
+
+	public void run()
+	{
+
+		try
+		{
+
+			System.out.println(session_id + " running !");
+
+			if(this.mars == null)
+			{
+				this.mars = new MARS(files.length*2500, files.length*25000, this.files.length);
+				this.mars.init();
+			}
+			this.mars.setOwner(this);
+			this.mars.load("../Save/server/" + this.saveDir + "/redcode" , this.files);
+			this.mars.run();
+			this.mars.getMemory().save("../Save/server/" + this.saveDir + "/" + this.session_id, session_id);
+			this.save("../Save/server/" + this.saveDir + "/" + this.session_id, session_id);
+			this.finished = true;
+
+		}
+		catch(Exception e)
+		{
+			System.out.println("Session :" + session_id + " has stopped working !");
+			e.printStackTrace();
+			this.finished = true;
+		}
+
+	}
+
+	public void start()
+	{
+		if(t == null)
+		{
+			t = new Thread(this, session_id);
+			t.start();
+		}
+	}
+
+	public void setStats(String s)
+	{
+		if (this.stats != null)
+		{
+			this.stats += "\n" + session_id + " : " + s;
+		}
+		else
+		{
+			this.stats = session_id + " : " + s;
+		}
+	}
+
+	public String getStats()
+	{
+		return this.stats;
+	}
+
+	public boolean finished()
+	{
+		return this.finished;
+	}
+
+	public void save(String dir, String filename)
+	{
+
+		new File(dir).mkdirs();
+		File save = new File(dir + "/" + filename + ".stat");
+
+		try 
+		{
+			FileWriter fw = new FileWriter(save);
+
+			try 
+			{
+
+				fw.write(files.length + "");
+				for (int i = 0; i < files.length; i++)
+				{
+					fw.write(" : " + files[i]);
+				}
+				fw.write("\n");
+				fw.write(this.getStats());
+				
+			}
+			catch (Exception e)
+			{
+				System.out.println("Cant write stats");
+			}
+
+
+			fw.close();
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+}
+					</code></pre>
+
+					</br></br>
+					<pre><code class="language-java">
+import java.net.*;
+import java.io.*;
+import java.util.*;
+
+public class StringArray
+{
+
+	private String[] s;
+
+	public StringArray(String[] s)
+	{
+		this.s = s;
+	}
+
+	public StringArray()
+	{
+		this.s = new String[0];
+	}
+
+	public String getStringArray()
+	{
+		return this.s;
+	}
+
+	public String getString(int i)
+	{
+		return this.s[i];
+	}
+
+	public String[] setStringArray(String[] s)
+	{
+		this.s = s
+		return this.getString();
+	}
+
+	public String[] setStringAt(int i, String s)
+	{
+
+		try
+		{
+			this.s[i] = s;
+		}
+		catch(IndexOutOfBoundsException e){
+			System.out.println(e);
+		}
+
+	}
+
+	public String[] push(String s)
+	{
+		String[] temp = new String[this.s.length + 1];
+
+		for (int i = 0; i < this.s.length; i++)
+		{
+			temp[i] = this.s[i];
+		}
+
+		temp[this.s.length] = s;
+
+		this.s = temp;
+
+		return this.getStringArray();
+
+	}
+
+}
+					</code></pre>
+
+					</br></br>
+					<pre><code class="language-java">
+import java.net.*;
+import java.io.*;
+import java.util.*;
+
+public class Client {
+
+  	final static int port = 9000;
+
+  	public static void main(String[] args) 
+  	{
+
+    	Socket socket;
+    	PrintStream out;
+
+        Scanner keybord_input;
+
+        //host
+        System.out.print("\nEntrer l'addresse de l'hote : ");
+        keybord_input = new Scanner(System.in);
+        String host = keybord_input.nextLine();
+
+        //username
+        System.out.print("\nEntrer votre nom : ");
+        keybord_input = new Scanner(System.in);
+        String username = keybord_input.nextLine();
+
+        //path
+        System.out.print("\nEntrer le chemin du dossier contenant votre fichier redcode : ");
+        keybord_input = new Scanner(System.in);
+        String dir = keybord_input.nextLine();
+
+        //filename
+        System.out.print("\nEntrer le nom de votre fichier redcode : ");
+        keybord_input = new Scanner(System.in);
+        String filename = keybord_input.nextLine();
+
+    	Scanner scanner;
+
+    	try 
+    	{
+
+      		InetAddress serveur = InetAddress.getByName(host);
+      		socket = new Socket(serveur, port);
+
+      		BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+      		out = new PrintStream(socket.getOutputStream());
+
+      		System.out.println(in.readLine());
+
+      		out.println(username + "_" + filename);
+
+      		File file = new File(dir + "/" + filename + ".RED");
+      		scanner = new Scanner(file);
+      		String nl;
+      		int size = 1024;
+
+      		for (int i=0; i < 1024; i++) {
+	      		try 
+	      		{
+	      			nl = scanner.nextLine();
+	      			out.println(nl);
+	      		}
+	      		catch (NoSuchElementException e)
+	      		{
+	      			size = i;
+					i = 1024;
+	      		}
+
+	      	}
+	      	out.println("exit");
+
+            boolean loop = true;
+
+            while (loop)
+            {
+                try
+                {
+                    nl = in.readLine();
+
+                    if(nl.equals("END"))
+                    {
+                        loop = false;
+                    }
+                    else
+                    {
+                        if(nl != null)
+                        {
+                            System.out.println("Server : " + nl);
+                        }
+                    }
+
+
+                }
+                catch(Exception e)
+                {
+                    break;
+                }
+            }
+
+            socket.close();
+
+    	} 
+    	catch (Exception e) 
+    	{
+      		e.printStackTrace();
+    	}
+  	}
+}
+					</code></pre>
+
+				</div>
+
+			</div>
+
+			<div class="card">
+
+				<div class="cardTitle"> Visualition Tri </div>
+
+				<div class="cardTech">
+					<span class="logo_big" id="js"></span>
+				</div>
+
+				<div class="cardLinks">
+					<button onclick="window.location.href='projets/sort/main.html'"> Démo </button>
+				</div>
+
+				<div class="cardDescription">
+					Une visualisation d'un algorithme de tri naif utilisant JS et la manipulation du DOM.
+
+				</br></br>	
+					CODE &lt<span class="logo" id="js" style="padding: 0"></span>&gt
+					<pre><code class="language-javascript">
+//on recupère les éléments de l'ui | we get the ui elements
+let graph = document.getElementById('graph');
+let setbtn = document.getElementById('set');
+let resetbtn = document.getElementById('reset');
+let startbtn = document.getElementById('start-btn');
+
+//les valeur entrer | input value
+let size = document.getElementById("size").value;
+let rmin = document.getElementById("min").value;
+let rmax = document.getElementById("max").value;
+
+//we create our global variable
+let values = new Array();
+let plots = new Array();
+let fps = 240;
+
+//we create control values
+let isSet = false;
+let operation;
+
+//when you click on set | quand tu clique sur le bouton
+setbtn.addEventListener('click', {
+  	handleEvent: function (event) {
+
+  		if (isSet == false) {
+	  		//update input value | maj des valeur entrer
+	  		size = document.getElementById("size").value;
+			rmin = document.getElementById("min").value;
+			rmax = document.getElementById("max").value;
+	    
+	  		//create the array | crée la liste de valeur
+	  		for (let i = 0; i < size; i++) {
+	  			values.push( Math.round(Math.random()*(rmax-rmin) + rmin) );
+	  		}
+	  		console.log(values); //log values in console (PRESS F12 in the browser)
+
+	  		//create the visual on graph | on cree le graph
+	  		for (let i = 0; i < values.length; i++) {
+	  			plot(i, values[i]);
+	  		}
+	  		//we change the control value to true
+	  		isSet = true;
+	  	}
+	  	else {console.log('les paramètres sont deja entrer.')}
+
+  	}
+});
+
+//when you click on reset | quand tu clique sur le bouton
+resetbtn.addEventListener('click', {
+  	handleEvent: function (event) {
+
+  		//on reset l'affichage
+  		for (let i = 0; i < plots.length; i++) {
+  			removePlot(plots[i]);
+  		}
+
+  		//on reset les valeur
+  		values = new Array();
+  		plots = new Array();
+
+  		//update input value | maj des valeur entrer
+  		size = document.getElementById("size").value;
+		rmin = document.getElementById("min").value;
+		rmax = document.getElementById("max").value;
+    
+  		//create the array | crée la liste de valeur
+  		for (let i = 0; i < size; i++) {
+  			values.push( Math.round(Math.random()*(rmax-rmin) + rmin) );
+  		}
+  		console.log(values); //log values in console (PRESS F12 in the browser)
+
+  		//create the visual on graph | on cree le graph
+  		for (let i = 0; i < values.length; i++) {
+  			plot(i, values[i]);
+  		}
+
+  	}
+});
+
+startbtn.addEventListener('click', {
+  	handleEvent: function (event) {
+
+  		//sort algorythme
+
+  		operation = 0;
+  		let i = -1;
+  		loop(i < values.length, i);
+
+
+  	}
+});
+
+function sort(i) {
+
+	if(values[i] > values[i+1]) {
+
+		swap(i);	
+		i=-1;
+
+	}
+
+	return i;
+
+}
+function swap(i) {
+
+	//swap in values array
+	let temp = values[i];
+	values[i] = values[i+1];
+	values[i+1] = temp;
+
+	//Graphics
+
+	//resize
+	let t = plots[i].style.height;
+	plots[i].style.height = plots[i+1].style.height;
+	plots[i+1].style.height = t;
+
+	//color effect
+	for (c = 0; c < document.querySelectorAll("#graph div").length; c++) {
+		document.querySelectorAll("#graph div")[c].style.backgroundColor = "#339966";
+		document.querySelectorAll("#graph div")[c].style.boxShadow = "none";
+	}
+	plots[i].style.backgroundColor = "#993366";
+	plots[i].style.boxShadow = "0 0 10px #c6538c"; 
+
+}
+
+
+function plot(n, val) {//plot the values in the graph | affiche les valeur dans le graph
+
+//n is the base position in the array | val is the value (it will determine the height)
+
+	let elm = document.createElement('div'); //element creation
+
+	let h = (val/rmax)*95;
+	let w = (100/size) //we consider the screen to be 1920px large (PRESS F11 FOR FULLSCREEN)
+	let x = n*(w)
+	w = (w/100)*90;
+	if (w < 1) {w = 1;}
+
+	let style = "position:absolute; width:"+w+"%; height:"+h+"%; bottom:0; left:"+x+"%; transform:translateY(0%);"
+	style += "border-top-left-radius:"+(w/2)+"px; border-top-right-radius:"+(w/2)+"px;" 
+
+	elm.style = style;
+
+	graph.appendChild(elm); //we had the element to the graph
+	plots.push(elm); //we index the element in plots array
+
+
+}
+
+function removePlot(elm) {
+    // Removes a plot from the graph
+    elm.parentNode.removeChild(elm);
+}
+
+function loop(control, i) {//work as a while() with delay
+
+	operation++;
+
+	if (control) { //what you want to do here
+
+		i++
+		i = sort(i);
+		console.log()
+		setTimeout(loop, 1000/fps, i < values.length, i);
+
+	}
+	else{alert(operation + " operation effectué !");}
+
+}
+
+//for console purposes
+function getValues() {return values;} 
+function getPlots() {return plots;}
+					</code></pre>
+
+				</div>
+
+			</div>
+
+		</div>
+
+		</div>		
+
+	</div>	
+
+	<div class="title"> Développeur Spécialiste en Image </div>
+
+	<div class="index_menu">
+		<button onclick="changeState(0)">Accueil</button>
+		<button onclick="changeState(1)">Projets</button>
+		<button onclick="window.location.href='cv/cv.html'">CV</button>
+	</div>
+
+	<footer> <a href="http://antony.madaleno&#64;yahoo.com">antony.madaleno@yahoo.com</a> </footer>
+
+	<script src="prism/prism.js"></script>
+	<script type="text/javascript" src="js/3Dindex.js"> </script>
+	<script type="text/javascript" src="js/index.js"> </script>
+
+</body>
