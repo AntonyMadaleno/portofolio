@@ -1,0 +1,83 @@
+<html>
+
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<head>
+
+	<link href="https://fonts.googleapis.com/css?family=Poppins&display=swap" rel="stylesheet"> 
+	<link href="css/main.css" rel="stylesheet" type="text/css" />
+
+	<script type="text/javascript" src="scripts/svg.js"> </script>
+	<script type="text/javascript" src="scripts/core.js"> </script>
+
+</head>
+
+<body onload="load()">
+
+	<nav> 
+		<button onclick="menu(1)"> Point </button>
+		<button onclick="menu(2)"> Line </button>
+		<button onclick="menu(3)"> Circle </button>
+		<button onclick="menu(4)"> Curve </button>
+
+	</nav>
+
+	<svg id="svg_window">
+
+	</svg>
+
+	<div class="menu" id="cr_point">
+		<ul>
+			<li><p> POINT CREATION </p></li>
+			<li><p>c : <input value="0" id="point_color"/></p></li>
+			<li><p>x : <input value="0" id="point_x"/></p></li>
+			<li><p>y : <input value="0" id="point_y"/></p></li>
+			<li><button onclick="point()"> add </button></li>
+		</ul>
+	</div>
+
+	<div class="menu" id="cr_line">
+		<ul>
+			<li><p> LINE CREATION </p></li>
+			<li><p>co : <input value="0" id="line_color"/></p></li>
+			<li><p>ax : <input value="0" id="line_ax"/></p></li>
+			<li><p>ay : <input value="0" id="line_ay"/></p></li>
+			<li><p>bx : <input value="0" id="line_bx"/></p></li>
+			<li><p>by : <input value="0" id="line_by"/></p></li>
+			<li><button onclick="line()"> add </button></li>
+		</ul>
+	</div>
+
+	<div class="menu" id="cr_circle">
+		<ul>
+			<li><p> CIRCLE CREATION </p></li>
+			<li><p>co : <input value="0" id="c_color"/></p></li>
+			<li><p>bc : <input value="0" id="c_border"/></p></li>
+			<li><p>r : <input value="0" id="c_radius"/></p></li>
+			<li><p>cx : <input value="0" id="circle_x"/></p></li>
+			<li><p>cy : <input value="0" id="circle_y"/></p></li>
+			<li><button onclick="circle()"> add </button></li>
+		</ul>
+	</div>
+
+	<div class="menu" id="cr_curve">
+		<ul>
+			<li><p> POINT CREATION </p></li>
+			<li><p>co : <input value="0" id="curve_color"/></p></li>
+			<li><p>x1 : <input value="0" id="curve_x1"/></p></li>
+			<li><p>y1 : <input value="0" id="curve_y1"/></p></li>
+			<li><p>x2 : <input value="0" id="curve_x2"/></p></li>
+			<li><p>y2 : <input value="0" id="curve_y2"/></p></li>
+			<li><p>x3 : <input value="0" id="curve_x3"/></p></li>
+			<li><p>y3 : <input value="0" id="curve_y3"/></p></li>
+			<li><p>x4 : <input value="0" id="curve_x4"/></p></li>
+			<li><p>y4 : <input value="0" id="curve_y4"/></p></li>
+			<li><button onclick="curve()"> add </button></li>
+		</ul>
+	</div>
+
+</body>
+
+
+</html>

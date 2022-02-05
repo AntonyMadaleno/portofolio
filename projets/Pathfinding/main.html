@@ -1,0 +1,35 @@
+<html>
+
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<head>
+
+	<link href="https://fonts.googleapis.com/css?family=Poppins&display=swap" rel="stylesheet"> 
+	<link href="css/main.css" rel="stylesheet" type="text/css" />
+
+	<script type="text/javascript" src="scripts/core.js"> </script>
+
+</head>
+
+<body onload="loadGrid(50,100)">
+
+	<nav> 
+		<button onclick='showStartPannel()'> Start </button>
+		<button onclick='switchMode("wall")'> wall </button>
+		<button onclick='switchMode("checkpoint")'> checkpoint </button>
+		<button onclick='switchMode("void")'> void </button>
+		<p class="label" id="mode_label"> mode </p>
+	</nav>
+
+	<table id="grid"> </table>
+
+	<div id="start_pannel">
+		<button onclick='pathfind()'> Start </button>
+		<input id="resolution" value="0"> </input>
+	</div>
+
+</body>
+
+
+</html>

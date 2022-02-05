@@ -1,0 +1,190 @@
+body {
+	background-image: url("../resource/background.jpg");
+	background-size: cover;
+	font-family: Arial, Helvetica, sans-serif;
+	overflow: hidden;
+	color: #ffffff;
+}
+
+.header {
+	position: absolute;
+	display: block;
+	background-color: rgba(0,0,0,0.6);
+	top: 0;
+	left: 0;
+	padding-left: 1%;
+	padding-right: 1%;
+	width: 98%;
+	height: 25%;
+	border-left: 1px solid black;
+	border-right: 1px solid black;
+	color: #f1f1f1;
+}
+
+.right_pannel {
+	position: absolute;
+	display: block;
+	width: 50%;
+	height: 75%;
+	top: 25%;
+	right: 0;
+	border-left: 2px solid #0099ff;
+	border-right: 1px solid #0099ff;
+	border-top: 2px solid #0099ff;
+	background-color: rgba(0,0,0,0.4);
+}
+
+.main {
+	position: absolute;
+	display: block;
+	width: 50%;
+	height: 75%;
+	top: 25%;
+	left: 0;
+	border-top: 2px solid #0099ff;
+	background-color: rgba(0,0,0,0.4);
+}
+
+.text_zone {
+	margin: 10px;
+}
+
+.title {
+	font-style: italic;
+	font-size: 120%;
+	font-weight: bold;
+	text-shadow: 0 0 1px black;
+	color: #3399cc;
+}
+
+.name {
+	font-size: 170%;
+	font-weight: bold;
+	color: #ffffff;
+	text-shadow: 0 0 1px black;
+	margin-left: 170px;
+}
+.keywords {
+	font-size: 130%;
+	color: #3399cc;
+	font-style: italic;
+	font-weight: bolder;
+	text-shadow: 0 0 1px black;
+	margin-left: 185px;
+}
+.bio {
+	font-size: 90%;
+	color: #f1f1f1;
+	text-shadow: 0 0 1px black;
+	margin-left: 185px;
+	text-align: justify;
+}
+
+.photo {
+	position: absolute;
+	top: 15px;
+	background-image: url("../resource/photo.png");
+	background-size: cover;
+	width: 165px;
+	height: 165px;
+	border: 1px solid #323232;
+	border-radius: 100%;
+	box-shadow: 0px 0px 3px black;
+	left: 1%;
+}
+
+.contact {
+	position: absolute;
+	display: block;
+	right: 10%;
+	top: 5px;
+	text-shadow: 0 0 1px black;
+}
+
+ul {
+	list-style-type: none; 
+}
+li {margin: 10px;}
+
+.website
+{
+	margin-left: 42px;
+	margin-top: 15px;
+	font-weight: bolder;
+}
+
+.logo {
+	height: 20px;
+	width: 20px;
+	padding-right: 7.5px;
+	background-repeat: no-repeat;
+	background-size: contain;
+	display: inline-block;
+	vertical-align: text-bottom;
+}
+.logo_big {
+	height: 32px;
+	width: 32px;
+	padding-right: 7.5px;
+	background-repeat: no-repeat;
+	background-size: contain;
+	display: inline-block;
+}
+.fr_flag_contact {
+	height: 25px;
+	width: 25px;
+	bottom: 7%;
+	right: 200px;
+	background-repeat: no-repeat;
+	background-size: contain;
+	position: absolute;
+}
+
+.assets_text {
+	background-color: #3399cc;
+	color: #fff;
+	font-weight: bold;
+	padding: 5px;
+	margin: 5px;
+	border-radius: 5px;
+	box-shadow: 0px 0px 3px #3399cc;
+}
+
+a {
+	color: #f1f1f1;
+	text-decoration: none;
+}
+
+a:active {
+	color: #999;
+}
+
+a:hover {
+	color: #3399cc;
+}
+
+#mail {background-image: url("../resource/logo/mail.png");}
+#linkedin {background-image: url("../resource/logo/linkedin.png");}
+#city {background-image: url("../resource/logo/position.png");}
+#jeux {background-image: url("../resource/logo/jeux.png");}
+#informatique {background-image: url("../resource/logo/informatique.png");}
+#sport {background-image: url("../resource/logo/sport.png");}
+#diplome {background-image: url("../resource/logo/diplome.png");}
+#fr_flag {background-image: url("../resource/logo/fr_flag.png");}
+#en_flag {background-image: url("../resource/logo/en_flag.png");}
+#es_flag {background-image: url("../resource/logo/es_flag.png");}
+#html {background-image: url("../resource/logo/html.png");}
+#css {background-image: url("../resource/logo/css.png");}
+#java {background-image: url("../resource/logo/java.png");}
+#python {background-image: url("../resource/logo/python.png");}
+#js {background-image: url("../resource/logo/js.png");}
+#tel {background-image: url("../resource/logo/tel.png");}
+#car {background-image: url("../resource/logo/car.png");}
+#moto {background-image: url("../resource/logo/moto.png");}
+#electron {background-image: url("../resource/logo/electron.png");}
+#excel {background-image: url("../resource/logo/logo-excel.png");}
+#cplus {background-image: url("../resource/logo/c++.png");}
+#php {background-image: url("../resource/logo/php.png");}
+#Github {background-image: url("../resource/logo/Github.png");}
+#opengl {background-image: url("../resource/logo/OpenGL.png");}
+#web {background-image: url("../resource/logo/web.png");}
