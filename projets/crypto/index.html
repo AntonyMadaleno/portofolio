@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+
+    <link href="styles/main.css" rel="stylesheet" type="text/css" />
+
+    <title> Cryptography Project </title>
+
+    <script src="scripts/main.js"></script>
+
+</head>
+
+<body onload="load()">
+
+    <footer>
+        <p>
+            <a href="https://github.com/AntonyMadaleno">Antony Madaleno</a>
+            <span style="color: #fd501d"> / </span>
+            <a href="https://github.com/oxydevvv">Quentin Isoard</a>
+        </p>
+    </footer>
+
+    <nav>
+        <div class="button" onclick="genRandom()">RANDOM</div>
+        <div class="button" onclick="openSubmit()">OPEN EDITOR</div>
+        <div class="button" onclick="saveDeck()">VALIDATE</div>
+        <div class="button" onclick="loadDeck()">RELOAD</div>
+        <div class="button" onclick="empty()">EMPTY </div>
+    </nav>
+
+    <div class="main_frame" id="card_display">
+
+    </div>
+
+    <div class="editor">
+
+        <div class="textarea" id ="input"></div>
+
+        <div class="textarea" id ="output"></div>
+
+        <div class="button" onclick="encode()"> ENCODE </div>
+        <div class="button" onclick="decode()"> DECODE </div>
+        <div class="button" onclick="copyOutput()"> COPY OUTPUT </div>
+
+    </div>
+
+</body>
+
+</html>
