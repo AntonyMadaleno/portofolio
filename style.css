@@ -96,6 +96,7 @@ p
   float: left;
   margin-right: 30px;
   border-radius: 100%;
+  box-shadow: 0 0 5px black;
 }
 
 /* Quality */
