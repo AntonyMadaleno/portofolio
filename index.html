@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Portfolio Website</title>
+    <title>Antony Madaleno</title>
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <!-- Font Awesome Icons -->
@@ -66,7 +66,17 @@
       <a href="#about-me">About me</a>
       <a href="#quality">My Qualities</a>
       <a href="#projects">My Projects</a>
+      <button onclick="changeLang('fr')" style="background-image: url('img/french.png')"> </button>
+      <button onclick="changeLang('en')" style="background-image: url('img/english.png')"> </button>
     </nav>
+
+    <script>
+      textHome = ["Home", "Accueil"]
+      textAbMe = ["About me", "À propos de moi"]
+      textQua = ["My Qualities", "Mes Qualitées"]
+      textPrj = ["My Projects", "Mes Projets"]
+    </script>
+
     <!-- Hero Banner Section -->
     <section id="hero-banner">
       <div class="container">
@@ -79,6 +89,14 @@
         </div>
       </div>
     </section>
+
+    <script>
+      textBannerH = ["Developer, Datascientist", "Developpeur Datascientist"]
+      textBannerP = [
+                      "I am a highly skilled developer proficient in Python, C++, OpenGL, and image processing, algorithmics and datascience.",
+                      "Je suis un développeur hautement qualifié avec une maîtrise de Python, C++, OpenGL, ainsi que du traitement d'image, de l'algorithmique et de la science des données."
+                    ]
+    </script>
 
     <!-- About Me Section -->
     <section id="about-me">
@@ -96,6 +114,13 @@
         </div>
       </div>
     </section>
+
+    <script>
+      textAbout = [
+        "I'am a young developer interested in Artificial Intelligence, Image processing and Datascience. I have studied in University of Dijon, actually still studying for a master degree in Computer Science.", 
+        "Je suis un jeune développeur intéressé par l'Intelligence Artificielle, le traitement d'images et la science des données. J'ai étudié à l'Université de Dijon et je suis actuellement en train de poursuivre un master en informatique."
+      ]
+    </script>
 
     <!-- Quality Section -->
     <section id="quality">
@@ -129,6 +154,29 @@
       </div>
     </section>
 
+    <script>
+      textQuaP = [
+        [
+          "As a creative developer, I thrive on pushing boundaries and exploring new possibilities. With a deep passion for technology and design, I am constantly seeking innovative solutions to complex problems. If you're looking for a developer who can bring fresh ideas to the table, look no further.", 
+          "En tant que développeur créatif, je prospère en repoussant les limites et en explorant de nouvelles possibilités. Avec une passion profonde pour la technologie et le design, je cherche constamment des solutions innovantes à des problèmes complexes. Si vous recherchez un développeur capable d'apporter des idées fraîches à la table, ne cherchez pas plus loin."
+        ],
+        [
+          "In addition to my technical skills, I also possess excellent communication and teamwork abilities. I understand the importance of collaborating with project managers, and stakeholders to ensure that the final product meets all requirements and exceeds expectations.",
+          "En plus de mes compétences techniques, je possède également d'excellentes compétences en communication et en travail d'équipe. Je comprends l'importance de collaborer avec les gestionnaires de projet et les parties prenantes pour m'assurer que le produit final répond à toutes les exigences et dépasse les attentes."
+        ],
+        [
+          "Throughout my studies, I have been involved in a diverse range of projects, from solving complex algorithmics challenge to web development. I am adept at working with a variety of programming languages and frameworks, and I am always eager to learn more.",
+          "Tout au long de mes études, j'ai été impliqué dans une grande variété de projets, allant de la résolution de défis algorithmiques complexes au développement web. Je suis compétent dans l'utilisation d'une variété de langages de programmation et de cadres de travail, et je suis toujours désireux d'en apprendre davantage."
+        ]
+      ]
+
+      textQuaH = [
+        ["Creativity", "Créativitée"],
+        ["Teamwork", "Travail d'équipe"],
+        ["Expertise", "Expertise"]
+      ]
+    </script>
+
     <!-- Projects Section -->
     <section id="projects">
 
@@ -154,7 +202,7 @@
               <div class="display-projects">
                 <a class="glass" href="https://antonymadaleno.github.io/portofolio/projets/Pathfinding/main.html" style="margin-top: 0px;">
                   <img src="img/djikstra.jpg" style="float: left; margin-right: 20px;"/>
-                  <p>
+                  <p id="djikstra">
                     <span class="title">Djikstra</span><br/>
                     Using JavaScript, I created a small demo of Dijkstra's shortest path algorithm. The program allows the user to input a start and end node, and the algorithm finds the shortest path between them. It's a great way to visualize how Dijkstra's algorithm works in practice. It also allow user to enter a weight value for the algorithm to act like A*.
                   </p>
@@ -162,7 +210,7 @@
 
                 <a class="glass" href="https://antonymadaleno.github.io/portofolio/projets/2D-ray/index.html">
                   <img src="img/raycast2D.jpg" style="float: right; margin-left: 20px;"/>
-                  <p>
+                  <p id = "ray">
                     <span class="title">Raycasting 2D</span><br/>
                     I created a small 2D raycasting engine project inspired by the 1993 game Doom. Using Javascript, I implemented a basic version of the algorithm used to render the walls. By casting rays from the player's position and calculating the distance to each wall, I was able to create a basic 3D environment that the player can explore.
                   </p>
@@ -170,7 +218,7 @@
 
                 <a class="glass" href="https://antonymadaleno.github.io/portofolio/projets/Bezier_curve/main.html">
                   <img src="img/bezier.jpg" style="float: left; margin-right: 20px;"/>
-                  <p>
+                  <p id="bezier">
                     <span class="title">Bezier Curve Generator</span><br/>
                     I built a small Bezier curve generator using JavaScript. The program allows users to add and manipulate control points to create smooth and curved paths. It's a simple but effective tool for creating custom curves, and a great way to learn about the math behind Bezier curves.
                   </p>
@@ -180,7 +228,7 @@
               <div class="display-projects" style="display: none;">
                 <a class="glass" href="https://github.com/AntonyMadaleno/imageTreatments" style="margin-top: 0px;">
                   <img src="img/imageProc.png" style="float: left; margin-right: 20px;"/>
-                  <p>
+                  <p id="imgproc">
                     <span class="title">Image Processing</span><br/>
                     A collection of small yet interesting projects that utilize OpenCV and Python for image processing. These projects cover a wide range of topics, from contour detection to image correction and image enhancement. Each project highlights my skills in computer vision, Python programming, and OpenCV libraries, demonstrating my ability to deliver high-quality results in image processing.
                   </p>
@@ -188,7 +236,7 @@
 
                 <a class="glass" href="https://github.com/AntonyMadaleno/MPI">
                   <img src="img/mpi.jpg" style="float: right; margin-left: 20px;"/>
-                  <p>
+                  <p id="mpi">
                     <span class="title">Raytracing MPI</span><br/>
                     I implemented an MPI-based raytracing tool using C to render simple 3D scenes in parallel. By leveraging the MPI message-passing interface, our project significantly reduced rendering time by enabling multiple processors to work simultaneously.
                   </p>
@@ -196,7 +244,7 @@
 
                 <a class="glass" href="https://github.com/AntonyMadaleno/corewar">
                   <img src="img/corewar.jpg" style="float: left; margin-right: 20px;"/>
-                  <p>
+                  <p id = "corewar">
                     <span class="title">Corewar</span><br/>
                     The CoreWar game implemented in Java is a small project that showcases the basic principles of the game. Players write assembly programs and pit them against each other in a virtual memory arena. The last program running wins.
                   </p>
@@ -205,8 +253,8 @@
 
               <div class="display-projects" style="display: none;">
                 <a class="glass" href="https://antonymadaleno.github.io/portofolio/projets/crypto/index.html" style="margin-top: 0px;">
-                  <img src="img/crypto.JPG" style="float: left; margin-right: 20px;"/>
-                  <p>
+                  <img src="img/crypto.jpg" style="float: left; margin-right: 20px;"/>
+                  <p id = "crypto">
                     <span class="title">Card Cryptography</span><br/>
                     A small cryptography project that leverages a deck of 52 cards and JavaScript programming. The project implements a unique cryptographic algorithm based on shuffling the deck of cards and using them to encrypt and decrypt messages.
                   </p>
@@ -214,15 +262,15 @@
 
                 <a class="glass" href="https://github.com/AntonyMadaleno/3D-Scene">
                   <img src="img/3d.jpg" style="float: right; margin-left: 20px;"/>
-                  <p>
+                  <p id = "3dProj">
                     <span class="title">Projet 3D</span><br/>
                     The project implemented a variety of 3D primitives such as cubes, spheres, cones, and pyramids, demonstrating my ability to create complex 3D models using OpenGL libraries. This project highlights my skills in C++ programming, 3D modeling, and OpenGL concepts.
                   </p>
                 </a>
 
                 <a class="glass" href="https://antonymadaleno.github.io/portofolio/projets/svgGame/index.html">
-                  <img src="img/svggame.JPG" style="float: left; margin-right: 20px;"/>
-                  <p>
+                  <img src="img/svggame.jpg" style="float: left; margin-right: 20px;"/>
+                  <p id = "svgGame">
                     <span class="title">SVG Game</span><br/>
                      A small game i developed using JavaScript that showcases my proficiency in SVG manipulation. The game features one SVG image that players manipulate by clicking and dragging to avoid obstacles and reach the end of the level. This project highlights my skills in JavaScript programming, game development, and SVG manipulation.
                   </p>
@@ -230,6 +278,147 @@
               </div>
 
               <script>
+
+                //content English - French
+
+                eSvg = document.getElementById("svgGame")
+                textSvg = [
+                  "<span class=\"title\">SVG Game</span><br/>A small game i developed using JavaScript that showcases my proficiency in SVG manipulation. The game features one SVG image that players manipulate by clicking and dragging to avoid obstacles and reach the end of the level. This project highlights my skills in JavaScript programming, game development, and SVG manipulation.",
+                  "<span class=\"title\">Jeu SVG</span><br/>Un petit jeu que j'ai développé en utilisant JavaScript qui met en valeur ma maîtrise de la manipulation de SVG. Le jeu comporte une image SVG que les joueurs peuvent manipuler en cliquant et en faisant glisser pour éviter les obstacles et atteindre la fin du niveau. Ce projet met en avant mes compétences en programmation JavaScript, en développement de jeux et en manipulation de SVG."
+                ]
+
+                e3D = document.getElementById("3dProj")
+                text3D = [
+                  "<span class=\"title\">3D Project</span><br/>The project implemented a variety of 3D primitives such as cubes, spheres, cones, and pyramids, demonstrating my ability to create complex 3D models using OpenGL libraries. This project highlights my skills in C++ programming, 3D modeling, and OpenGL concepts.",
+                  "<span class=\"title\">Projet 3D</span><br/>Le projet a mis en œuvre une variété de primitives 3D telles que des cubes, des sphères, des cônes et des pyramides, démontrant ma capacité à créer des modèles 3D complexes en utilisant des bibliothèques OpenGL. Ce projet met en avant mes compétences en programmation C++, en modélisation 3D et en concepts OpenGL."
+                ] 
+
+                eCrypt = document.getElementById("crypto")
+                textCrypto = [
+                  "<span class=\"title\">Card Cryptography</span><br/>A small cryptography project that leverages a deck of 52 cards and JavaScript programming. The project implements a unique cryptographic algorithm based on shuffling the deck of cards and using them to encrypt and decrypt messages.",
+                  "<span class=\"title\">Cryptographie sur jeu de 52 Cartes</span><br/>Un petit projet de cryptographie qui exploite un jeu de 52 cartes et la programmation JavaScript. Le projet implémente un algorithme de cryptographie unique basé sur le mélange du jeu de cartes et leur utilisation pour chiffrer et déchiffrer des messages."
+                ]
+
+                eCW = document.getElementById("corewar")
+                textCW = [
+                  "<span class=\"title\">Corewar</span><br/>The CoreWar game implemented in Java is a small project that showcases the basic principles of the game. Players write assembly programs and pit them against each other in a virtual memory arena. The last program running wins.",
+                  "<span class=\"title\">Corewar</span><br/>Le jeu CoreWar implémenté en Java est un petit projet qui présente les principes de base du jeu. Les joueurs écrivent des programmes en langage d'assemblage et les opposent les uns aux autres dans une arène de mémoire virtuelle. Le dernier programme en cours d'exécution gagne."
+                ]
+
+                eMPI = document.getElementById("mpi")
+                textMPI = 
+                [
+                  "<span class=\"title\">Raytracing MPI</span><br/>I implemented an MPI-based raytracing tool using C to render simple 3D scenes in parallel. By leveraging the MPI message-passing interface, our project significantly reduced rendering time by enabling multiple processors to work simultaneously.",
+                  "<span class=\"title\">Lancer de Rayon MPI</span><br/>J'ai implémenté un outil de raytracing basé sur MPI en utilisant C pour rendre des scènes 3D simples en parallèle. En exploitant l'interface de passage de messages MPI, notre projet a considérablement réduit le temps de rendu en permettant à plusieurs processeurs de travailler simultanément."
+                ]
+
+                eIMG = document.getElementById("imgproc")
+                textIMG =
+                [
+                  "<span class=\"title\">Traitements des images</span><br/>A collection of small yet interesting projects that utilize OpenCV and Python for image processing. These projects cover a wide range of topics, from contour detection to image correction and image enhancement. Each project highlights my skills in computer vision, Python programming, and OpenCV libraries, demonstrating my ability to deliver high-quality results in image processing.",
+                  "<span class=\"title\">Traitements des images</span><br/>Une collection de petits projets intéressants qui utilisent OpenCV et Python pour le traitement d'images. Ces projets couvrent une large gamme de sujets, allant de la détection de contours à la correction d'images et l'amélioration d'images. Chaque projet met en évidence mes compétences en vision par ordinateur, en programmation Python et en bibliothèques OpenCV."
+                ]
+
+                eBez = document.getElementById("bezier")
+                textBezier =
+                [
+                  "<span class=\"title\">Bezier Curve Generator</span><br/>I built a small Bezier curve generator using JavaScript. The program allows users to add and manipulate control points to create smooth and curved paths. It's a simple but effective tool for creating custom curves, and a great way to learn about the math behind Bezier curves.",
+                  "<span class=\"title\">Générateur de courbe de Bézier</span><br/>J'ai créé un petit générateur de courbes de Bézier en utilisant JavaScript. Le programme permet aux utilisateurs d'ajouter et de manipuler des points de contrôle pour créer des trajectoires douces et courbes. C'est un outil simple mais efficace pour créer des courbes personnalisées, et une excellente façon d'apprendre les mathématiques derrière les courbes de Bézier."
+                ]
+
+                eRay = document.getElementById("ray")
+                textRay =
+                [
+                  "<span class=\"title\">Raycasting 2D</span><br/>I created a small 2D raycasting engine project inspired by the 1993 game Doom. Using Javascript, I implemented a basic version of the algorithm used to render the walls. By casting rays from the player's position and calculating the distance to each wall, I was able to create a basic 3D environment that the player can explore.",
+                  "<span class=\"title\">Lancer de Rayon 2D</span><br/>J'ai créé un petit projet de moteur de raycasting 2D inspiré du jeu Doom de 1993. En utilisant JavaScript, j'ai implémenté une version de base de l'algorithme utilisé pour rendre les murs. En lançant des rayons depuis la position du joueur et en calculant la distance jusqu'à chaque mur, j'ai pu créer un environnement 3D de base que le joueur peut explorer."
+                ]
+
+                eDji = document.getElementById("djikstra")
+                textDjik =
+                [
+                  "<span class=\"title\">Djikstra</span><br/>Using JavaScript, I created a small demo of Dijkstra's shortest path algorithm. The program allows the user to input a start and end node, and the algorithm finds the shortest path between them. It's a great way to visualize how Dijkstra's algorithm works in practice. It also allow user to enter a weight value for the algorithm to act like A*.",
+                  "<span class=\"title\">Djikstra</span><br/>En utilisant JavaScript, j'ai créé une petite démonstration de l'algorithme de chemin le plus court de Dijkstra. Le programme permet de saisir un nœud de départ et d'arrivée et ensuite trouve le chemin le plus court entre eux. C'est une façon interactive de visualiser comment fonctionne l'algorithme de Dijkstra. Il permet également d'entrer une valeur de poids pour que l'algorithme agisse comme A*."
+                ]
+
+                lang = "fr"
+
+                function changeLang(lg)
+                {
+
+                  quTexts = document.querySelectorAll("p.card-text")
+                  quTitles = document.querySelectorAll(".card-title")
+
+                  if (lg === "en")
+                  {
+                    document.querySelectorAll("#navigation a")[0].innerHTML = textHome[0];
+                    document.querySelectorAll("#navigation a")[1].innerHTML = textAbMe[0];
+                    document.querySelectorAll("#navigation a")[2].innerHTML = textQua[0];
+                    document.querySelectorAll("#navigation a")[3].innerHTML = textPrj[0];
+
+                    document.querySelector("#about-me .container div div p").innerHTML = textAbout[0]
+                    document.querySelector("#about-me .container div div h3").innerHTML = textAbMe[0]
+
+                    document.querySelector("#hero-banner  .container div div p").innerHTML = textBannerP[0]
+                    document.querySelector("#hero-banner .container div div h2").innerHTML = textBannerH[0]
+
+                    for (let i = 0; i < 3; i++)
+                    {
+                      quTexts[i].innerHTML = textQuaP[i][0];
+                      quTitles[i].innerHTML = textQuaH[i][0]
+                    }
+
+                    eSvg.innerHTML    = textSvg[0]
+                    e3D.innerHTML     = text3D[0]
+                    eCrypt.innerHTML  = textCrypto[0]
+                    eCW.innerHTML     = textCW[0]
+                    eMPI.innerHTML    = textMPI[0]
+                    eIMG.innerHTML    = textIMG[0]
+                    eBez.innerHTML    = textBezier[0]
+                    eRay.innerHTML    = textRay[0]
+                    eDji.innerHTML    = textDjik[0]
+
+                    document.querySelector("#projects h3").innerHTML = "Projects"
+
+                    return "en"
+                  }
+                  if (lg === "fr")
+                  {
+                    document.querySelectorAll("#navigation a")[0].innerHTML = textHome[1];
+                    document.querySelectorAll("#navigation a")[1].innerHTML = textAbMe[1];
+                    document.querySelectorAll("#navigation a")[2].innerHTML = textQua[1];
+                    document.querySelectorAll("#navigation a")[3].innerHTML = textPrj[1];
+
+                    document.querySelector("#about-me .container div div p").innerHTML = textAbout[1]
+                    document.querySelector("#about-me .container div div h3").innerHTML = textAbMe[1]
+
+                    document.querySelector("#hero-banner  .container div div p").innerHTML = textBannerP[1]
+                    document.querySelector("#hero-banner .container div div h2").innerHTML = textBannerH[1]
+
+                    for (let i = 0; i < quTexts.length; i++)
+                    {
+                      quTexts[i].innerHTML = textQuaP[i][1];
+                      quTitles[i].innerHTML = textQuaH[i][1]
+                    }
+
+                    eSvg.innerHTML    = textSvg[1]
+                    e3D.innerHTML     = text3D[1]
+                    eCrypt.innerHTML  = textCrypto[1]
+                    eCW.innerHTML     = textCW[1]
+                    eMPI.innerHTML    = textMPI[1]
+                    eIMG.innerHTML    = textIMG[1]
+                    eBez.innerHTML    = textBezier[1]
+                    eRay.innerHTML    = textRay[1]
+                    eDji.innerHTML    = textDjik[1]
+
+                    document.querySelector("#projects h3").innerHTML = "Projets"
+
+                    return "fr"
+                  }
+
+                }
+
+                changeLang(lang);
+
                 let buts = document.querySelector(".direct-buttons");
                 let sub = [];
                 let next = document.getElementById("next");

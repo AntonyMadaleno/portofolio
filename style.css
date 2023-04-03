@@ -31,10 +31,38 @@ p
   cursor: pointer;
   letter-spacing: 1px;
   background-color: #333;
+  transition-duration: 0.5s;
 }
 
 #navigation a:hover {
-  background-color: #555;
+  background-color: #555 !important;
+  text-decoration: none;
+}
+
+#navigation button {
+  color: #fff;
+  font-size: 24px;
+  margin: 0px 5px;
+  padding: 10px;
+  height: 36px;
+  width: 64px;
+  background-size: cover;
+  display: inline-block;
+  position: relative;
+  right: -15px;
+  text-align: center;
+  cursor: pointer;
+  letter-spacing: 1px;
+  box-shadow: 0 0 3px rgb(0, 0, 0);
+  transition-duration: 0.5s;
+  outline: none;
+  background-color: transparent;
+  border: 1px outset black;
+  border-radius: 5px;
+}
+
+#navigation button:hover {
+  box-shadow: 0 0 6px rgb(0, 153, 113);
   text-decoration: none;
 }
 
@@ -96,7 +124,6 @@ p
   float: left;
   margin-right: 30px;
   border-radius: 100%;
-  box-shadow: 0 0 5px black;
 }
 
 /* Quality */
